@@ -26,7 +26,8 @@
               });
             })
           ];
-        ];
+        };
+
       in {
         packages.default = pkgs.static-graphviz;
 

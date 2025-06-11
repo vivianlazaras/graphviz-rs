@@ -1,5 +1,5 @@
 {
-  description = "Statically compiled Graphviz for Rust FFI";
+  description = "Static Graphviz build for Rust FFI";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -11,37 +11,45 @@
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [
-            (final: prev: {
-              # Custom graphviz with static build flags
-              static-graphviz = prev.graphviz.overrideAttrs (old: {
-                pname = "static-graphviz";
-                buildInputs = (old.buildInputs or []) ++ [ prev.pkg-config ];
-                configureFlags = (old.configureFlags or []) ++ [
-                  "--enable-static"
-                  "--disable-shared"
-                  "--without-x"
-                ];
-                makeFlags = (old.makeFlags or []) ++ [ "LDFLAGS=-static" ];
-              });
-            })
-          ];
         };
 
+        static-graphviz = pkgs.graphviz.overrideAttrs (old: {
+          pname = "static-graphviz";
+
+          configureFlags = (old.configureFlags or []) ++ [
+            "--enable-static"
+            "--disable-shared"
+            "--disable-tcl"
+            "--disable-java"
+            "--disable-php"
+            "--disable-python"
+            "--disable-guile"
+            "--disable-gtk"
+            "--disable-qt"
+            "--disable-x"
+            "--without-x"
+            "--without-tclsh"
+            "--without-wish"
+          ];
+
+          # Strip any tools relying on dynamic GUI subsystems
+          buildInputs = (old.buildInputs or []);
+          nativeBuildInputs = (old.nativeBuildInputs or []);
+          doCheck = false;
+          doInstallCheck = false;
+        });
       in {
-        packages.default = pkgs.static-graphviz;
+        packages.default = static-graphviz;
 
         devShells.default = pkgs.mkShell {
           name = "graphviz-static-dev";
           packages = [
-            pkgs.static-graphviz
+            static-graphviz
             pkgs.pkg-config
-            pkgs.graphviz
           ];
 
           shellHook = ''
-            echo "Static Graphviz available. Use pkg-config to locate libraries."
-            echo "You can now link libgvc, libcgraph, etc. from your Rust build."
+            echo "Static Graphviz with libgvc and libcgraph ready for FFI."
           '';
         };
       });

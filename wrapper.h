@@ -1,2 +1,2 @@
 #include <gvc.h>
-#include <graphviz/cgraph.h>
+#include <cgraph.h>

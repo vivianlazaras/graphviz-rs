@@ -13,63 +13,20 @@
           inherit system;
         };
 
-        remove-vimdot-plugin-makefile-am = pkgs.writeText "remove-vimdot-plugin-makefile-am.patch" ''
-        --- a/plugin/Makefile.am
-        +++ b/plugin/Makefile.am
-        @@ -1,7 +1,6 @@
-        -SUBDIRS = \
-        -  vimdot \
-        -  core \
-        -  layout \
-        -  neato_layout \
-        -  fdp_layout \
-        -  sfdp_layout \
-        -  circo_layout \
-        -  tred_layout
-        +SUBDIRS = \
-        +  core \
-        +  layout \
-        +  neato_layout \
-        +  fdp_layout \
-        +  sfdp_layout \
-        +  circo_layout \
-        +  tred_layout
-      '';
-
-      remove-vimdot-plugin-makefile-in = pkgs.writeText "remove-vimdot-plugin-makefile-in.patch" ''
-        --- a/plugin/Makefile.in
-        +++ b/plugin/Makefile.in
-        @@ -1,7 +1,6 @@
-        -SUBDIRS = \
-        -  vimdot \
-        -  core \
-        -  layout \
-        -  neato_layout \
-        -  fdp_layout \
-        -  sfdp_layout \
-        -  circo_layout \
-        -  tred_layout
-        +SUBDIRS = \
-        +  core \
-        +  layout \
-        +  neato_layout \
-        +  fdp_layout \
-        +  sfdp_layout \
-        +  circo_layout \
-        +  tred_layout
-      '';
-
+        fullVersion = pkgs.llvmPackages.libclang.lib.version; # e.g. "19.1.17"
+        majorVersion = 
+          let
+            # Match digits before the first dot
+            matches = builtins.match "^(\\\\d+)" fullVersion;
+          in
+            if matches == null then fullVersion else matches[0];
         static-graphviz = pkgs.graphviz.overrideAttrs (old: {
           pname = "static-graphviz-libs-only";
-
-          patches = (old.patches or []) ++ [
-            remove-vimdot-plugin-makefile-am
-            remove-vimdot-plugin-makefile-in
-          ];
 
           configureFlags = (old.configureFlags or []) ++ [
             "--enable-static"
             "--disable-shared"
+            "--disable-ltdl"
             "--disable-tcl"
             "--disable-java"
             "--disable-php"
@@ -88,7 +45,10 @@
           # Skip building tests and install checks
           doCheck = false;
           doInstallCheck = false;
-
+          
+          postFixup = ''
+          # no-op
+        '';
           # Optional: prevent building tools if extra flags needed
           postConfigure = ''
             # Remove tools from Makefile or disable their build if needed
@@ -107,10 +67,23 @@
           packages = [
             static-graphviz
             pkgs.pkg-config
+            pkgs.libclang
+            pkgs.clang
+            pkgs.zlib
+            pkgs.libxml2
+            pkgs.expat
+            pkgs.llvmPackages.libclang
           ];
 
           shellHook = ''
             echo "Static Graphviz with libgvc and libcgraph ready for FFI."
+            echo "using clang version ${pkgs.llvmPackages.libclang.lib.version}"
+            export LIBCLANG_PATH=${pkgs.llvmPackages.libclang.lib}/lib
+            export INCLUDE_DIR=${static-graphviz}/include/
+            export PKG_CONFIG_PATH=${static-graphviz}/lib/pkgconfig
+            export BINDGEN_EXTRA_CLANG_ARGS="$(pkg-config --cflags libgvc) \
+              -I${pkgs.llvmPackages.libclang.lib}/lib/clang/19/include \
+              -I${pkgs.glibc.dev}/include"
           '';
         };
       });

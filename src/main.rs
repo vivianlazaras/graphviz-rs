@@ -1,7 +1,8 @@
+#![allow(non_camel_case_types)]
 use std::ffi::{CString, CStr};
 use std::ptr;
 
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+include!("bindings.rs");
 
 fn main() {
     unsafe {

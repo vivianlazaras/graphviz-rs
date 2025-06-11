@@ -1,30 +1,46 @@
-use std::env;
-use std::path::PathBuf;
-
 fn main() {
-    // Tell cargo to link statically
-    pkg_config::Config::new()
-        .statik(true)
-        .cargo_metadata(true)
-        .probe("libgvc")
-        .expect("Could not find libgvc");
+    let gvc_cflags = std::process::Command::new("pkg-config")
+        .args(&["--cflags", "libgvc"])
+        .output()
+        .expect("Failed to run pkg-config")
+        .stdout;
 
-    // Re-run build if the wrapper changes
-    println!("cargo:rerun-if-changed=wrapper.h");
+    let cflags = String::from_utf8(gvc_cflags).unwrap();
+    let clang_args = cflags
+        .split_whitespace()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>();
 
-    // Generate bindings
-    let bindings = bindgen::Builder::default()
-        .header("wrapper.h")
-        .allowlist_function("gv.*")
-        .allowlist_function("ag.*")
-        .allowlist_type("Agraph_t")
-        .allowlist_type("GVC_t")
+    let mut bindings = bindgen::Builder::default()
+        .header("wrapper.h");
+
+    for arg in &clang_args {
+        bindings = bindings.clang_arg(arg);
+    }
+
+    let bindings = bindings
+        .blocklist_item("FP_ZERO")
+        .blocklist_item("FP_INFINITE")
+        .blocklist_item("FP_NAN")
+        .blocklist_item("FP_NORMAL")
+        .blocklist_item("FP_SUBNORMAL")
         .generate()
         .expect("Unable to generate bindings");
 
-    // Write the bindings to the $OUT_DIR
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+        println!("cargo:rustc-link-lib=static=gvc");
+        println!("cargo:rustc-link-lib=static=cgraph");
+        println!("cargo:rustc-link-lib=static=cdt");
+        println!("cargo:rustc-link-lib=static=pathplan");
+        println!("cargo:rustc-link-lib=static=xdot");
+    
+        // Add any required system libs
+        println!("cargo:rustc-link-lib=dylib=z");         // zlib
+        println!("cargo:rustc-link-lib=dylib=m");         // math
+        println!("cargo:rustc-link-lib=dylib=stdc++");    // if C++ symbols needed
+        println!("cargo:rustc-link-lib=dylib=c");         // libc (should be implicit)
+
+        println!("cargo:rustc-link-lib=dylib=expat");
     bindings
-        .write_to_file(out_path.join("bindings.rs"))
+        .write_to_file("src/bindings.rs")
         .expect("Couldn't write bindings!");
 }

@@ -36,6 +36,7 @@
           packages = [
             pkgs.static-graphviz
             pkgs.pkg-config
+            pkgs.graphviz
           ];
 
           shellHook = ''

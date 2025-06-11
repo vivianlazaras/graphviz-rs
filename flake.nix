@@ -13,8 +13,59 @@
           inherit system;
         };
 
-        static-graphviz-libs-only = pkgs.graphviz.overrideAttrs (old: {
+        remove-vimdot-plugin-makefile-am = pkgs.writeText "remove-vimdot-plugin-makefile-am.patch" ''
+        --- a/plugin/Makefile.am
+        +++ b/plugin/Makefile.am
+        @@ -1,7 +1,6 @@
+        -SUBDIRS = \
+        -  vimdot \
+        -  core \
+        -  layout \
+        -  neato_layout \
+        -  fdp_layout \
+        -  sfdp_layout \
+        -  circo_layout \
+        -  tred_layout
+        +SUBDIRS = \
+        +  core \
+        +  layout \
+        +  neato_layout \
+        +  fdp_layout \
+        +  sfdp_layout \
+        +  circo_layout \
+        +  tred_layout
+      '';
+
+      remove-vimdot-plugin-makefile-in = pkgs.writeText "remove-vimdot-plugin-makefile-in.patch" ''
+        --- a/plugin/Makefile.in
+        +++ b/plugin/Makefile.in
+        @@ -1,7 +1,6 @@
+        -SUBDIRS = \
+        -  vimdot \
+        -  core \
+        -  layout \
+        -  neato_layout \
+        -  fdp_layout \
+        -  sfdp_layout \
+        -  circo_layout \
+        -  tred_layout
+        +SUBDIRS = \
+        +  core \
+        +  layout \
+        +  neato_layout \
+        +  fdp_layout \
+        +  sfdp_layout \
+        +  circo_layout \
+        +  tred_layout
+      '';
+
+        static-graphviz = pkgs.graphviz.overrideAttrs (old: {
           pname = "static-graphviz-libs-only";
+
+          patches = (old.patches or []) ++ [
+            remove-vimdot-plugin-makefile-am
+            remove-vimdot-plugin-makefile-in
+          ];
 
           configureFlags = (old.configureFlags or []) ++ [
             "--enable-static"

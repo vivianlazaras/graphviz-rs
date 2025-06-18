@@ -507,7 +507,6 @@ pub const _STRINGS_H: u32 = 1;
 pub const DT_SET: u32 = 1;
 pub const DT_OSET: u32 = 4;
 pub const DT_OBAG: u32 = 8;
-pub const DT_QUEUE: u32 = 64;
 pub const DT_METHODS: u32 = 255;
 pub const DT_INSERT: u32 = 1;
 pub const DT_DELETE: u32 = 2;
@@ -521,7 +520,6 @@ pub const DT_LAST: u32 = 256;
 pub const DT_MATCH: u32 = 512;
 pub const DT_VSEARCH: u32 = 1024;
 pub const DT_DETACH: u32 = 4096;
-pub const DT_PRIME: u32 = 17109811;
 pub const _INTTYPES_H: u32 = 1;
 pub const ____gwchar_t_defined: u32 = 1;
 pub const __PRI64_PREFIX: &[u8; 2] = b"l\0";
@@ -4835,14 +4833,10 @@ unsafe extern "C" {
         __n: ::std::os::raw::c_ulong,
     ) -> ::std::os::raw::c_ulong;
 }
-pub type Dtlink_t = _dtlink_s;
-pub type Dthold_t = _dthold_s;
-pub type Dtdisc_t = _dtdisc_s;
-pub type Dtmethod_t = _dtmethod_s;
-pub type Dtdata_t = _dtdata_s;
-pub type Dt_t = _dt_s;
-pub type Dict_t = _dt_s;
-pub type Dtstat_t = _dtstat_s;
+pub type Dtlink_t = dtlink_s_;
+pub type Dtdisc_t = dtdisc_s_;
+pub type Dt_t = dt_s_;
+pub type Dict_t = dt_s_;
 pub type Dtsearch_f = ::std::option::Option<
     unsafe extern "C" fn(
         arg1: *mut Dt_t,
@@ -4865,100 +4859,99 @@ pub type Dtcompar_f = ::std::option::Option<
 >;
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct _dtlink_s {
+pub struct dtlink_s_ {
     pub right: *mut Dtlink_t,
-    pub hl: _dtlink_s__bindgen_ty_1,
+    pub hl: dtlink_s___bindgen_ty_1,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub union _dtlink_s__bindgen_ty_1 {
+pub union dtlink_s___bindgen_ty_1 {
     pub _hash: ::std::os::raw::c_uint,
     pub _left: *mut Dtlink_t,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of _dtlink_s__bindgen_ty_1"][::std::mem::size_of::<_dtlink_s__bindgen_ty_1>() - 8usize];
-    ["Alignment of _dtlink_s__bindgen_ty_1"]
-        [::std::mem::align_of::<_dtlink_s__bindgen_ty_1>() - 8usize];
-    ["Offset of field: _dtlink_s__bindgen_ty_1::_hash"]
-        [::std::mem::offset_of!(_dtlink_s__bindgen_ty_1, _hash) - 0usize];
-    ["Offset of field: _dtlink_s__bindgen_ty_1::_left"]
-        [::std::mem::offset_of!(_dtlink_s__bindgen_ty_1, _left) - 0usize];
+    ["Size of dtlink_s___bindgen_ty_1"][::std::mem::size_of::<dtlink_s___bindgen_ty_1>() - 8usize];
+    ["Alignment of dtlink_s___bindgen_ty_1"]
+        [::std::mem::align_of::<dtlink_s___bindgen_ty_1>() - 8usize];
+    ["Offset of field: dtlink_s___bindgen_ty_1::_hash"]
+        [::std::mem::offset_of!(dtlink_s___bindgen_ty_1, _hash) - 0usize];
+    ["Offset of field: dtlink_s___bindgen_ty_1::_left"]
+        [::std::mem::offset_of!(dtlink_s___bindgen_ty_1, _left) - 0usize];
 };
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of _dtlink_s"][::std::mem::size_of::<_dtlink_s>() - 16usize];
-    ["Alignment of _dtlink_s"][::std::mem::align_of::<_dtlink_s>() - 8usize];
-    ["Offset of field: _dtlink_s::right"][::std::mem::offset_of!(_dtlink_s, right) - 0usize];
-    ["Offset of field: _dtlink_s::hl"][::std::mem::offset_of!(_dtlink_s, hl) - 8usize];
+    ["Size of dtlink_s_"][::std::mem::size_of::<dtlink_s_>() - 16usize];
+    ["Alignment of dtlink_s_"][::std::mem::align_of::<dtlink_s_>() - 8usize];
+    ["Offset of field: dtlink_s_::right"][::std::mem::offset_of!(dtlink_s_, right) - 0usize];
+    ["Offset of field: dtlink_s_::hl"][::std::mem::offset_of!(dtlink_s_, hl) - 8usize];
 };
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct _dthold_s {
+pub struct Dthold_t {
     pub hdr: Dtlink_t,
     pub obj: *mut ::std::os::raw::c_void,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of _dthold_s"][::std::mem::size_of::<_dthold_s>() - 24usize];
-    ["Alignment of _dthold_s"][::std::mem::align_of::<_dthold_s>() - 8usize];
-    ["Offset of field: _dthold_s::hdr"][::std::mem::offset_of!(_dthold_s, hdr) - 0usize];
-    ["Offset of field: _dthold_s::obj"][::std::mem::offset_of!(_dthold_s, obj) - 16usize];
+    ["Size of Dthold_t"][::std::mem::size_of::<Dthold_t>() - 24usize];
+    ["Alignment of Dthold_t"][::std::mem::align_of::<Dthold_t>() - 8usize];
+    ["Offset of field: Dthold_t::hdr"][::std::mem::offset_of!(Dthold_t, hdr) - 0usize];
+    ["Offset of field: Dthold_t::obj"][::std::mem::offset_of!(Dthold_t, obj) - 16usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct _dtmethod_s {
+pub struct Dtmethod_t {
     pub searchf: Dtsearch_f,
     pub type_: ::std::os::raw::c_int,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of _dtmethod_s"][::std::mem::size_of::<_dtmethod_s>() - 16usize];
-    ["Alignment of _dtmethod_s"][::std::mem::align_of::<_dtmethod_s>() - 8usize];
-    ["Offset of field: _dtmethod_s::searchf"]
-        [::std::mem::offset_of!(_dtmethod_s, searchf) - 0usize];
-    ["Offset of field: _dtmethod_s::type_"][::std::mem::offset_of!(_dtmethod_s, type_) - 8usize];
+    ["Size of Dtmethod_t"][::std::mem::size_of::<Dtmethod_t>() - 16usize];
+    ["Alignment of Dtmethod_t"][::std::mem::align_of::<Dtmethod_t>() - 8usize];
+    ["Offset of field: Dtmethod_t::searchf"][::std::mem::offset_of!(Dtmethod_t, searchf) - 0usize];
+    ["Offset of field: Dtmethod_t::type_"][::std::mem::offset_of!(Dtmethod_t, type_) - 8usize];
 };
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct _dtdata_s {
+pub struct Dtdata_t {
     pub type_: ::std::os::raw::c_int,
     pub here: *mut Dtlink_t,
-    pub hh: _dtdata_s__bindgen_ty_1,
+    pub hh: Dtdata_t__bindgen_ty_1,
     pub ntab: ::std::os::raw::c_int,
     pub size: ::std::os::raw::c_int,
     pub loop_: ::std::os::raw::c_int,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub union _dtdata_s__bindgen_ty_1 {
+pub union Dtdata_t__bindgen_ty_1 {
     pub _htab: *mut *mut Dtlink_t,
     pub _head: *mut Dtlink_t,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of _dtdata_s__bindgen_ty_1"][::std::mem::size_of::<_dtdata_s__bindgen_ty_1>() - 8usize];
-    ["Alignment of _dtdata_s__bindgen_ty_1"]
-        [::std::mem::align_of::<_dtdata_s__bindgen_ty_1>() - 8usize];
-    ["Offset of field: _dtdata_s__bindgen_ty_1::_htab"]
-        [::std::mem::offset_of!(_dtdata_s__bindgen_ty_1, _htab) - 0usize];
-    ["Offset of field: _dtdata_s__bindgen_ty_1::_head"]
-        [::std::mem::offset_of!(_dtdata_s__bindgen_ty_1, _head) - 0usize];
+    ["Size of Dtdata_t__bindgen_ty_1"][::std::mem::size_of::<Dtdata_t__bindgen_ty_1>() - 8usize];
+    ["Alignment of Dtdata_t__bindgen_ty_1"]
+        [::std::mem::align_of::<Dtdata_t__bindgen_ty_1>() - 8usize];
+    ["Offset of field: Dtdata_t__bindgen_ty_1::_htab"]
+        [::std::mem::offset_of!(Dtdata_t__bindgen_ty_1, _htab) - 0usize];
+    ["Offset of field: Dtdata_t__bindgen_ty_1::_head"]
+        [::std::mem::offset_of!(Dtdata_t__bindgen_ty_1, _head) - 0usize];
 };
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of _dtdata_s"][::std::mem::size_of::<_dtdata_s>() - 40usize];
-    ["Alignment of _dtdata_s"][::std::mem::align_of::<_dtdata_s>() - 8usize];
-    ["Offset of field: _dtdata_s::type_"][::std::mem::offset_of!(_dtdata_s, type_) - 0usize];
-    ["Offset of field: _dtdata_s::here"][::std::mem::offset_of!(_dtdata_s, here) - 8usize];
-    ["Offset of field: _dtdata_s::hh"][::std::mem::offset_of!(_dtdata_s, hh) - 16usize];
-    ["Offset of field: _dtdata_s::ntab"][::std::mem::offset_of!(_dtdata_s, ntab) - 24usize];
-    ["Offset of field: _dtdata_s::size"][::std::mem::offset_of!(_dtdata_s, size) - 28usize];
-    ["Offset of field: _dtdata_s::loop_"][::std::mem::offset_of!(_dtdata_s, loop_) - 32usize];
+    ["Size of Dtdata_t"][::std::mem::size_of::<Dtdata_t>() - 40usize];
+    ["Alignment of Dtdata_t"][::std::mem::align_of::<Dtdata_t>() - 8usize];
+    ["Offset of field: Dtdata_t::type_"][::std::mem::offset_of!(Dtdata_t, type_) - 0usize];
+    ["Offset of field: Dtdata_t::here"][::std::mem::offset_of!(Dtdata_t, here) - 8usize];
+    ["Offset of field: Dtdata_t::hh"][::std::mem::offset_of!(Dtdata_t, hh) - 16usize];
+    ["Offset of field: Dtdata_t::ntab"][::std::mem::offset_of!(Dtdata_t, ntab) - 24usize];
+    ["Offset of field: Dtdata_t::size"][::std::mem::offset_of!(Dtdata_t, size) - 28usize];
+    ["Offset of field: Dtdata_t::loop_"][::std::mem::offset_of!(Dtdata_t, loop_) - 32usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct _dtdisc_s {
+pub struct dtdisc_s_ {
     pub key: ::std::os::raw::c_int,
     pub size: ::std::os::raw::c_int,
     pub link: ::std::os::raw::c_int,
@@ -4968,21 +4961,22 @@ pub struct _dtdisc_s {
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of _dtdisc_s"][::std::mem::size_of::<_dtdisc_s>() - 40usize];
-    ["Alignment of _dtdisc_s"][::std::mem::align_of::<_dtdisc_s>() - 8usize];
-    ["Offset of field: _dtdisc_s::key"][::std::mem::offset_of!(_dtdisc_s, key) - 0usize];
-    ["Offset of field: _dtdisc_s::size"][::std::mem::offset_of!(_dtdisc_s, size) - 4usize];
-    ["Offset of field: _dtdisc_s::link"][::std::mem::offset_of!(_dtdisc_s, link) - 8usize];
-    ["Offset of field: _dtdisc_s::makef"][::std::mem::offset_of!(_dtdisc_s, makef) - 16usize];
-    ["Offset of field: _dtdisc_s::freef"][::std::mem::offset_of!(_dtdisc_s, freef) - 24usize];
-    ["Offset of field: _dtdisc_s::comparf"][::std::mem::offset_of!(_dtdisc_s, comparf) - 32usize];
+    ["Size of dtdisc_s_"][::std::mem::size_of::<dtdisc_s_>() - 40usize];
+    ["Alignment of dtdisc_s_"][::std::mem::align_of::<dtdisc_s_>() - 8usize];
+    ["Offset of field: dtdisc_s_::key"][::std::mem::offset_of!(dtdisc_s_, key) - 0usize];
+    ["Offset of field: dtdisc_s_::size"][::std::mem::offset_of!(dtdisc_s_, size) - 4usize];
+    ["Offset of field: dtdisc_s_::link"][::std::mem::offset_of!(dtdisc_s_, link) - 8usize];
+    ["Offset of field: dtdisc_s_::makef"][::std::mem::offset_of!(dtdisc_s_, makef) - 16usize];
+    ["Offset of field: dtdisc_s_::freef"][::std::mem::offset_of!(dtdisc_s_, freef) - 24usize];
+    ["Offset of field: dtdisc_s_::comparf"][::std::mem::offset_of!(dtdisc_s_, comparf) - 32usize];
 };
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct _dt_s {
+#[derive(Copy, Clone)]
+pub struct dt_s_ {
     pub searchf: Dtsearch_f,
     pub disc: *mut Dtdisc_t,
-    pub data: *mut Dtdata_t,
+    #[doc = "< sharable data"]
+    pub data: Dtdata_t,
     pub meth: *mut Dtmethod_t,
     pub nview: ::std::os::raw::c_int,
     pub view: *mut Dt_t,
@@ -4991,20 +4985,20 @@ pub struct _dt_s {
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of _dt_s"][::std::mem::size_of::<_dt_s>() - 64usize];
-    ["Alignment of _dt_s"][::std::mem::align_of::<_dt_s>() - 8usize];
-    ["Offset of field: _dt_s::searchf"][::std::mem::offset_of!(_dt_s, searchf) - 0usize];
-    ["Offset of field: _dt_s::disc"][::std::mem::offset_of!(_dt_s, disc) - 8usize];
-    ["Offset of field: _dt_s::data"][::std::mem::offset_of!(_dt_s, data) - 16usize];
-    ["Offset of field: _dt_s::meth"][::std::mem::offset_of!(_dt_s, meth) - 24usize];
-    ["Offset of field: _dt_s::nview"][::std::mem::offset_of!(_dt_s, nview) - 32usize];
-    ["Offset of field: _dt_s::view"][::std::mem::offset_of!(_dt_s, view) - 40usize];
-    ["Offset of field: _dt_s::walk"][::std::mem::offset_of!(_dt_s, walk) - 48usize];
-    ["Offset of field: _dt_s::user"][::std::mem::offset_of!(_dt_s, user) - 56usize];
+    ["Size of dt_s_"][::std::mem::size_of::<dt_s_>() - 96usize];
+    ["Alignment of dt_s_"][::std::mem::align_of::<dt_s_>() - 8usize];
+    ["Offset of field: dt_s_::searchf"][::std::mem::offset_of!(dt_s_, searchf) - 0usize];
+    ["Offset of field: dt_s_::disc"][::std::mem::offset_of!(dt_s_, disc) - 8usize];
+    ["Offset of field: dt_s_::data"][::std::mem::offset_of!(dt_s_, data) - 16usize];
+    ["Offset of field: dt_s_::meth"][::std::mem::offset_of!(dt_s_, meth) - 56usize];
+    ["Offset of field: dt_s_::nview"][::std::mem::offset_of!(dt_s_, nview) - 64usize];
+    ["Offset of field: dt_s_::view"][::std::mem::offset_of!(dt_s_, view) - 72usize];
+    ["Offset of field: dt_s_::walk"][::std::mem::offset_of!(dt_s_, walk) - 80usize];
+    ["Offset of field: dt_s_::user"][::std::mem::offset_of!(dt_s_, user) - 88usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct _dtstat_s {
+pub struct Dtstat_t {
     pub dt_meth: ::std::os::raw::c_int,
     pub dt_size: ::std::os::raw::c_int,
     pub dt_n: usize,
@@ -5013,13 +5007,13 @@ pub struct _dtstat_s {
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of _dtstat_s"][::std::mem::size_of::<_dtstat_s>() - 32usize];
-    ["Alignment of _dtstat_s"][::std::mem::align_of::<_dtstat_s>() - 8usize];
-    ["Offset of field: _dtstat_s::dt_meth"][::std::mem::offset_of!(_dtstat_s, dt_meth) - 0usize];
-    ["Offset of field: _dtstat_s::dt_size"][::std::mem::offset_of!(_dtstat_s, dt_size) - 4usize];
-    ["Offset of field: _dtstat_s::dt_n"][::std::mem::offset_of!(_dtstat_s, dt_n) - 8usize];
-    ["Offset of field: _dtstat_s::dt_max"][::std::mem::offset_of!(_dtstat_s, dt_max) - 16usize];
-    ["Offset of field: _dtstat_s::dt_count"][::std::mem::offset_of!(_dtstat_s, dt_count) - 24usize];
+    ["Size of Dtstat_t"][::std::mem::size_of::<Dtstat_t>() - 32usize];
+    ["Alignment of Dtstat_t"][::std::mem::align_of::<Dtstat_t>() - 8usize];
+    ["Offset of field: Dtstat_t::dt_meth"][::std::mem::offset_of!(Dtstat_t, dt_meth) - 0usize];
+    ["Offset of field: Dtstat_t::dt_size"][::std::mem::offset_of!(Dtstat_t, dt_size) - 4usize];
+    ["Offset of field: Dtstat_t::dt_n"][::std::mem::offset_of!(Dtstat_t, dt_n) - 8usize];
+    ["Offset of field: Dtstat_t::dt_max"][::std::mem::offset_of!(Dtstat_t, dt_max) - 16usize];
+    ["Offset of field: Dtstat_t::dt_count"][::std::mem::offset_of!(Dtstat_t, dt_count) - 24usize];
 };
 unsafe extern "C" {
     #[doc = "< set with unique elements"]
@@ -5034,17 +5028,7 @@ unsafe extern "C" {
     pub static mut Dtobag: *mut Dtmethod_t;
 }
 unsafe extern "C" {
-    #[doc = "< queue: insert at top, delete at tail"]
-    pub static mut Dtqueue: *mut Dtmethod_t;
-}
-unsafe extern "C" {
     pub static mut Dttree: *mut Dtmethod_t;
-}
-unsafe extern "C" {
-    pub static mut _Dttree: Dtmethod_t;
-}
-unsafe extern "C" {
-    pub static mut _Dtqueue: Dtmethod_t;
 }
 unsafe extern "C" {
     pub fn dtopen(arg1: *mut Dtdisc_t, arg2: *mut Dtmethod_t) -> *mut Dt_t;
@@ -5779,13 +5763,6 @@ pub struct Agiddisc_s {
             createflag: ::std::os::raw::c_int,
         ) -> ::std::os::raw::c_long,
     >,
-    pub alloc: ::std::option::Option<
-        unsafe extern "C" fn(
-            state: *mut ::std::os::raw::c_void,
-            objtype: ::std::os::raw::c_int,
-            id: IDTYPE,
-        ) -> ::std::os::raw::c_long,
-    >,
     pub free: ::std::option::Option<
         unsafe extern "C" fn(
             state: *mut ::std::os::raw::c_void,
@@ -5811,16 +5788,15 @@ pub struct Agiddisc_s {
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of Agiddisc_s"][::std::mem::size_of::<Agiddisc_s>() - 56usize];
+    ["Size of Agiddisc_s"][::std::mem::size_of::<Agiddisc_s>() - 48usize];
     ["Alignment of Agiddisc_s"][::std::mem::align_of::<Agiddisc_s>() - 8usize];
     ["Offset of field: Agiddisc_s::open"][::std::mem::offset_of!(Agiddisc_s, open) - 0usize];
     ["Offset of field: Agiddisc_s::map"][::std::mem::offset_of!(Agiddisc_s, map) - 8usize];
-    ["Offset of field: Agiddisc_s::alloc"][::std::mem::offset_of!(Agiddisc_s, alloc) - 16usize];
-    ["Offset of field: Agiddisc_s::free"][::std::mem::offset_of!(Agiddisc_s, free) - 24usize];
-    ["Offset of field: Agiddisc_s::print"][::std::mem::offset_of!(Agiddisc_s, print) - 32usize];
-    ["Offset of field: Agiddisc_s::close"][::std::mem::offset_of!(Agiddisc_s, close) - 40usize];
+    ["Offset of field: Agiddisc_s::free"][::std::mem::offset_of!(Agiddisc_s, free) - 16usize];
+    ["Offset of field: Agiddisc_s::print"][::std::mem::offset_of!(Agiddisc_s, print) - 24usize];
+    ["Offset of field: Agiddisc_s::close"][::std::mem::offset_of!(Agiddisc_s, close) - 32usize];
     ["Offset of field: Agiddisc_s::idregister"]
-        [::std::mem::offset_of!(Agiddisc_s, idregister) - 48usize];
+        [::std::mem::offset_of!(Agiddisc_s, idregister) - 40usize];
 };
 #[doc = " IO services"]
 #[repr(C)]
@@ -5961,7 +5937,8 @@ unsafe extern "C" {
 pub struct Agclos_s {
     pub disc: Agdisc_t,
     pub state: Agdstate_t,
-    pub strdict: *mut Dict_t,
+    #[doc = "< shared string dict"]
+    pub strdict: *mut ::std::os::raw::c_void,
     pub seq: [u64; 3usize],
     pub cb: *mut Agcbstack_t,
     pub lookup_by_name: [*mut Dict_t; 3usize],
@@ -6052,14 +6029,9 @@ unsafe extern "C" {
     pub fn agmemconcat(g: *mut Agraph_t, cp: *const ::std::os::raw::c_char) -> *mut Agraph_t;
 }
 unsafe extern "C" {
-    pub fn agreadline(arg1: ::std::os::raw::c_int);
-}
-unsafe extern "C" {
-    pub fn agsetfile(arg1: *const ::std::os::raw::c_char);
-}
-unsafe extern "C" {
     pub fn agconcat(
         g: *mut Agraph_t,
+        filename: *const ::std::os::raw::c_char,
         chan: *mut ::std::os::raw::c_void,
         disc: *mut Agdisc_t,
     ) -> *mut Agraph_t;
@@ -6205,7 +6177,13 @@ unsafe extern "C" {
     ) -> *mut ::std::os::raw::c_char;
 }
 unsafe extern "C" {
-    #[doc = " creating one if necessary"]
+    #[doc = "\n Use of this function should be avoided where possible. It is not possible to\n explicitly indicate whether the caller is trying to create a regular text\n string or an HTML-like string. It is better to be explicit with your intent\n and instead call either @ref agstrdup_text or @ref agstrdup_html."]
+    pub fn agstrdup_text(
+        arg1: *mut Agraph_t,
+        arg2: *const ::std::os::raw::c_char,
+    ) -> *mut ::std::os::raw::c_char;
+}
+unsafe extern "C" {
     pub fn agstrdup_html(
         arg1: *mut Agraph_t,
         arg2: *const ::std::os::raw::c_char,
@@ -6221,16 +6199,23 @@ unsafe extern "C" {
     ) -> *mut ::std::os::raw::c_char;
 }
 unsafe extern "C" {
+    pub fn agstrbind_text(
+        g: *mut Agraph_t,
+        arg1: *const ::std::os::raw::c_char,
+    ) -> *mut ::std::os::raw::c_char;
+}
+unsafe extern "C" {
+    pub fn agstrbind_html(
+        g: *mut Agraph_t,
+        arg1: *const ::std::os::raw::c_char,
+    ) -> *mut ::std::os::raw::c_char;
+}
+unsafe extern "C" {
     pub fn agstrfree(
         arg1: *mut Agraph_t,
         arg2: *const ::std::os::raw::c_char,
+        is_html: bool,
     ) -> ::std::os::raw::c_int;
-}
-unsafe extern "C" {
-    pub fn agcanon(
-        str_: *mut ::std::os::raw::c_char,
-        html: ::std::os::raw::c_int,
-    ) -> *mut ::std::os::raw::c_char;
 }
 unsafe extern "C" {
     pub fn agstrcanon(
@@ -6271,10 +6256,12 @@ pub struct Agsym_s {
     pub kind: ::std::os::raw::c_uchar,
     pub fixed: ::std::os::raw::c_uchar,
     pub print: ::std::os::raw::c_uchar,
+    #[doc = "< graph from whose string pool `name` and `defval` were\n< allocated"]
+    pub owner: *mut Agraph_t,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of Agsym_s"][::std::mem::size_of::<Agsym_s>() - 40usize];
+    ["Size of Agsym_s"][::std::mem::size_of::<Agsym_s>() - 48usize];
     ["Alignment of Agsym_s"][::std::mem::align_of::<Agsym_s>() - 8usize];
     ["Offset of field: Agsym_s::link"][::std::mem::offset_of!(Agsym_s, link) - 0usize];
     ["Offset of field: Agsym_s::name"][::std::mem::offset_of!(Agsym_s, name) - 16usize];
@@ -6283,6 +6270,7 @@ const _: () = {
     ["Offset of field: Agsym_s::kind"][::std::mem::offset_of!(Agsym_s, kind) - 36usize];
     ["Offset of field: Agsym_s::fixed"][::std::mem::offset_of!(Agsym_s, fixed) - 37usize];
     ["Offset of field: Agsym_s::print"][::std::mem::offset_of!(Agsym_s, print) - 38usize];
+    ["Offset of field: Agsym_s::owner"][::std::mem::offset_of!(Agsym_s, owner) - 40usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -6318,6 +6306,23 @@ const _: () = {
     ["Offset of field: Agdatadict_s::dict"][::std::mem::offset_of!(Agdatadict_s, dict) - 16usize];
 };
 unsafe extern "C" {
+    pub fn agattr_text(
+        g: *mut Agraph_t,
+        kind: ::std::os::raw::c_int,
+        name: *mut ::std::os::raw::c_char,
+        value: *const ::std::os::raw::c_char,
+    ) -> *mut Agsym_t;
+}
+unsafe extern "C" {
+    pub fn agattr_html(
+        g: *mut Agraph_t,
+        kind: ::std::os::raw::c_int,
+        name: *mut ::std::os::raw::c_char,
+        value: *const ::std::os::raw::c_char,
+    ) -> *mut Agsym_t;
+}
+unsafe extern "C" {
+    #[doc = "\n Regular text attributes cannot be created or looked up with this function.\n See @ref agattr_text for that.\n\n @param g Graph. When `g` is `NULL`, the default is set for all graphs\n   created subsequently.\n @param kind May be @ref AGRAPH, @ref AGNODE, or @ref AGEDGE.\n @param value Default value. When `value` is `NULL`, the request is to search\n   for an existing attribute of the given kind and name.\n\n If the attribute already exists, its default for creating new objects is set\n to the given `value`; if it does not exist, a new attribute is created with\n the given default `value`, and the default is applied to all pre-existing\n objects of the given `kind`."]
     pub fn agattr(
         g: *mut Agraph_t,
         kind: ::std::os::raw::c_int,
@@ -6326,6 +6331,7 @@ unsafe extern "C" {
     ) -> *mut Agsym_t;
 }
 unsafe extern "C" {
+    #[doc = "\n Use of this function should be avoided where possible. It is not possible to\n explicitly indicate whether the caller is trying to create/lookup a regular\n text attribute or an HTML-like attribute. It is better to be explicit with\n your intent and instead call either @ref agattr_text or @ref agattr_html.\n\n This function has the following behavior:\n   1. If the `value` passed was obtained from `agstrdup_html`, an HTML-like\n      attribute value is created/looked up. That is, the behavior is\n      equivalent to a call to @ref agattr_html.\n   2. Otherwise, a regular text attribute value is created/looked up.\n\n @param g graph. When is NULL, the default is set for all graphs created\n   subsequently.\n @param kind may be @ref AGRAPH, @ref AGNODE, or @ref AGEDGE.\n @param value default value. When is @ref NULL, the request is to search for\n   for an existing attribute of the given kind and name."]
     pub fn agattrsym(
         obj: *mut ::std::os::raw::c_void,
         name: *mut ::std::os::raw::c_char,
@@ -6405,6 +6411,20 @@ unsafe extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 unsafe extern "C" {
+    pub fn agset_text(
+        obj: *mut ::std::os::raw::c_void,
+        name: *mut ::std::os::raw::c_char,
+        value: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+unsafe extern "C" {
+    pub fn agset_html(
+        obj: *mut ::std::os::raw::c_void,
+        name: *mut ::std::os::raw::c_char,
+        value: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+unsafe extern "C" {
     pub fn agxset(
         obj: *mut ::std::os::raw::c_void,
         sym: *mut Agsym_t,
@@ -6412,6 +6432,38 @@ unsafe extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 unsafe extern "C" {
+    pub fn agxset_text(
+        obj: *mut ::std::os::raw::c_void,
+        sym: *mut Agsym_t,
+        value: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+unsafe extern "C" {
+    pub fn agxset_html(
+        obj: *mut ::std::os::raw::c_void,
+        sym: *mut Agsym_t,
+        value: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+unsafe extern "C" {
+    pub fn agsafeset_text(
+        obj: *mut ::std::os::raw::c_void,
+        name: *mut ::std::os::raw::c_char,
+        value: *const ::std::os::raw::c_char,
+        def: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+unsafe extern "C" {
+    #[doc = "   setting it locally\n\n The attribue set by this function is a regular text attribute. See\n @ref agsafeset_html for the equivalent for an HTML-like attribute.\n\n @param obj Object on which to set the attribute\n @param name Name of the attribute to set\n @param value Value of the attribute to set\n @param def Optional default to declare for the attribute"]
+    pub fn agsafeset_html(
+        obj: *mut ::std::os::raw::c_void,
+        name: *mut ::std::os::raw::c_char,
+        value: *const ::std::os::raw::c_char,
+        def: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+unsafe extern "C" {
+    #[doc = "   setting it locally\n\n The attribue set by this function is an HTML-like attribute. See\n @ref agsafeset_text for the equivalent for a regular text attribute.\n\n @param obj Object on which to set the attribute\n @param name Name of the attribute to set\n @param value Value of the attribute to set\n @param def Optional default to declare for the attribute"]
     pub fn agsafeset(
         obj: *mut ::std::os::raw::c_void,
         name: *mut ::std::os::raw::c_char,
@@ -6428,7 +6480,7 @@ unsafe extern "C" {
     ) -> *mut Agraph_t;
 }
 unsafe extern "C" {
-    pub fn agidsubg(g: *mut Agraph_t, id: IDTYPE, cflag: ::std::os::raw::c_int) -> *mut Agraph_t;
+    pub fn agidsubg(g: *mut Agraph_t, id: IDTYPE) -> *mut Agraph_t;
 }
 unsafe extern "C" {
     pub fn agfstsubg(g: *mut Agraph_t) -> *mut Agraph_t;
@@ -6467,24 +6519,6 @@ unsafe extern "C" {
         in_: ::std::os::raw::c_int,
         out: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
-}
-unsafe extern "C" {
-    #[doc = " @defgroup cgmem memory\n @{"]
-    pub fn agalloc(g: *mut Agraph_t, size: usize) -> *mut ::std::os::raw::c_void;
-}
-unsafe extern "C" {
-    pub fn agrealloc(
-        g: *mut Agraph_t,
-        ptr: *mut ::std::os::raw::c_void,
-        oldsize: usize,
-        size: usize,
-    ) -> *mut ::std::os::raw::c_void;
-}
-unsafe extern "C" {
-    pub fn agfree(g: *mut Agraph_t, ptr: *mut ::std::os::raw::c_void);
-}
-unsafe extern "C" {
-    pub fn aginternalmapclearlocalnames(g: *mut Agraph_t);
 }
 pub const agerrlevel_t_AGWARN: agerrlevel_t = 0;
 pub const agerrlevel_t_AGERR: agerrlevel_t = 1;
@@ -7636,12 +7670,12 @@ pub struct rank_t {
     pub pht2: f64,
     pub candidate: bool,
     pub valid: bool,
-    pub cache_nc: ::std::os::raw::c_int,
+    pub cache_nc: i64,
     pub flat: *mut adjmatrix_t,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of rank_t"][::std::mem::size_of::<rank_t>() - 80usize];
+    ["Size of rank_t"][::std::mem::size_of::<rank_t>() - 88usize];
     ["Alignment of rank_t"][::std::mem::align_of::<rank_t>() - 8usize];
     ["Offset of field: rank_t::n"][::std::mem::offset_of!(rank_t, n) - 0usize];
     ["Offset of field: rank_t::v"][::std::mem::offset_of!(rank_t, v) - 8usize];
@@ -7653,8 +7687,8 @@ const _: () = {
     ["Offset of field: rank_t::pht2"][::std::mem::offset_of!(rank_t, pht2) - 56usize];
     ["Offset of field: rank_t::candidate"][::std::mem::offset_of!(rank_t, candidate) - 64usize];
     ["Offset of field: rank_t::valid"][::std::mem::offset_of!(rank_t, valid) - 65usize];
-    ["Offset of field: rank_t::cache_nc"][::std::mem::offset_of!(rank_t, cache_nc) - 68usize];
-    ["Offset of field: rank_t::flat"][::std::mem::offset_of!(rank_t, flat) - 72usize];
+    ["Offset of field: rank_t::cache_nc"][::std::mem::offset_of!(rank_t, cache_nc) - 72usize];
+    ["Offset of field: rank_t::flat"][::std::mem::offset_of!(rank_t, flat) - 80usize];
 };
 pub const ratio_t_R_NONE: ratio_t = 0;
 pub const ratio_t_R_VALUE: ratio_t = 1;
@@ -8292,7 +8326,7 @@ unsafe extern "C" {
         g: *mut graph_t,
         format: *const ::std::os::raw::c_char,
         result: *mut *mut ::std::os::raw::c_char,
-        length: *mut ::std::os::raw::c_uint,
+        length: *mut usize,
     ) -> ::std::os::raw::c_int;
 }
 unsafe extern "C" {

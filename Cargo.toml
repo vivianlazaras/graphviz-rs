@@ -5,7 +5,10 @@ edition = "2024"
 
 [dependencies]
 libc = "0.2"
+serde = "1.0.219"
+serde_derive = "1.0.219"
 
 [build-dependencies]
 bindgen = "0.72"
 pkg-config = "0.3"
+walkdir = "2.5.0"

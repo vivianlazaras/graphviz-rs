@@ -1,4 +1,5 @@
 {
+
   description = "Static Graphviz build for Rust FFI";
 
   inputs = {
@@ -9,56 +10,103 @@
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs {
-          inherit system;
-        };
+        pkgs = import nixpkgs { inherit system; };
 
-        fullVersion = pkgs.llvmPackages.libclang.lib.version; # e.g. "19.1.17"
-        majorVersion = 
-          let
-            # Match digits before the first dot
-            matches = builtins.match "^(\\\\d+)" fullVersion;
-          in
-            if matches == null then fullVersion else matches[0];
-        static-graphviz = pkgs.graphviz.overrideAttrs (old: {
+        fullVersion = pkgs.llvmPackages.libclang.lib.version;
+        majorVersion =
+          let matches = builtins.match "^([0-9]+)" fullVersion;
+          in if matches == null then fullVersion else matches[0];
+
+        static-graphviz = pkgs.stdenv.mkDerivation rec {
           pname = "static-graphviz-libs-only";
+          version = "13.0.0";
 
-          configureFlags = (old.configureFlags or []) ++ [
-            "--enable-static"
-            "--disable-shared"
-            "--disable-ltdl"
-            "--disable-tcl"
-            "--disable-java"
-            "--disable-php"
-            "--disable-python"
-            "--disable-guile"
-            "--disable-gtk"
-            "--disable-qt"
-            "--disable-x"
-            "--without-x"
-            "--without-tclsh"
-            "--without-wish"
-            "--disable-tools"           # <-- key: disable all tools
-            "--disable-vim"             # <-- disables vim and vimdot
+          src = pkgs.fetchFromGitLab {
+            owner = "graphviz";
+            repo = "graphviz";
+            rev = version;
+            hash = "sha256-wDjTtI/TyrpXgN4Jk5m0Q9tCNr1lsDQ69nxMi24JWpE=";
+          };
+
+          nativeBuildInputs = [
+            pkgs.autoreconfHook
+            pkgs.pkg-config
+            pkgs.makeWrapper
+            pkgs.python3
+            pkgs.bison
+            pkgs.flex
           ];
 
-          # Skip building tests and install checks
-          doCheck = false;
-          doInstallCheck = false;
-          
-          postFixup = ''
-          # no-op
-        '';
-          # Optional: prevent building tools if extra flags needed
-          postConfigure = ''
-            # Remove tools from Makefile or disable their build if needed
-            sed -i '/^SUBDIRS =.*vimdot/d' plugin/Makefile.am || true
+          buildInputs = [
+            pkgs.libpng
+            pkgs.libjpeg
+            pkgs.expat
+            pkgs.fontconfig
+            pkgs.gd
+            pkgs.gts
+            pkgs.pango
+          ];
+
+          preAutoreconf = ''
+            ./autogen.sh
           '';
 
-          # Ensure nativeBuildInputs & buildInputs are preserved
-          buildInputs = old.buildInputs or [];
-          nativeBuildInputs = old.nativeBuildInputs or [];
-        });
+          configureFlags = [
+            "--with-pic"
+            "--without-x"
+            "--disable-x"
+
+            # core features
+            "--enable-gvc"
+            "--enable-plugin"
+
+            # known working options
+            "--enable-ast"
+            "--enable-common"
+            "--enable-fdpgen"
+            "--enable-label"
+            "--enable-mingle"
+            "--enable-pack"
+            "--enable-sfdpgen"
+            "--enable-twopigen"
+            "--enable-xdot"
+
+            # converted from directory names
+            "--enable-cdt"
+            "--enable-dotgen"
+            "--enable-glcomp"
+            "--enable-neatogen"
+            "--enable-patchwork"
+            "--enable-sfio"
+            "--enable-util"
+            "--enable-cgraph"
+            "--enable-edgepaint"
+            "--enable-ortho"
+            "--enable-pathplan"
+            "--enable-sparse"
+            "--enable-vmalloc"
+            "--enable-circogen"
+            "--enable-expr"
+            "--enable-gvpr"
+            "--enable-osage"
+            "--enable-rbtree"
+            "--enable-topfish"
+            "--enable-vpsc"
+          ];
+
+          doCheck = false;
+          doInstallCheck = false;
+
+          postInstall = ''
+            mkdir -p $out/lib
+            find . -name '*.a' -exec cp -v {} $out/lib \;
+
+            mkdir -p $out/include
+            find . -name '*.h' -exec cp -v --parents {} $out/include \;
+          '';
+
+          enableParallelBuilding = true;
+        };
       in {
         packages.default = static-graphviz;
 
@@ -77,7 +125,7 @@
 
           shellHook = ''
             echo "Static Graphviz with libgvc and libcgraph ready for FFI."
-            echo "using clang version ${pkgs.llvmPackages.libclang.lib.version}"
+            echo "Using clang version ${pkgs.llvmPackages.libclang.lib.version}"
             export LIBCLANG_PATH=${pkgs.llvmPackages.libclang.lib}/lib
             export INCLUDE_DIR=${static-graphviz}/include/
             export PKG_CONFIG_PATH=${static-graphviz}/lib/pkgconfig

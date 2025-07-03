@@ -1,7 +1,8 @@
-use std::process::Command;
 
-fn main() {
-    
+#[cfg(feature = "bindings")]
+fn generate_bindings() {
+    use std::process::Command;
+
     // Emit dynamic link flags for all required Graphviz libraries
     for lib_name in &["gvc", "cgraph", "cdt", "xdot"] {
         println!("cargo:rustc-link-lib=dylib={}", lib_name);
@@ -38,4 +39,9 @@ fn main() {
     bindings
         .write_to_file("src/bindings.rs")
         .expect("Couldn't write bindings!");
+}
+
+fn main() {
+    #[cfg(feature = "bindings")]
+    generate_bindings();
 }

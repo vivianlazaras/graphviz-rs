@@ -2,20 +2,31 @@
 name = "graphviz"
 version = "0.1.0"
 edition = "2024"
+[lib]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 libc = { version = "0.2", optional = true }
+logos = "0.15.0"
 serde = { version = "1.0.219", optional = true }
 serde_derive = { version = "1.0.219", optional = true } 
 uuid = { version = "1.17.0", features = ["v4", "serde"]}
 
 [features]
 serde = [ "dep:serde", "dep:serde_derive" ]
-bindings = [ "dep:libc" ]
+bindings = [ "dep:libc", "dep:cc" ]
 default = ["serde", "bindings"]
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+serde-wasm-bindgen = "0.5"
+uuid = { version = "1", default-features = false, features = ["v4", "serde", "js"] }
 
 [build-dependencies]
 bindgen = "0.72"
 pkg-config = "0.3"
 walkdir = "2.5.0"
+cc = { version = "*", optional = true }
+
+[dev-dependencies]
+serde_json = "*"

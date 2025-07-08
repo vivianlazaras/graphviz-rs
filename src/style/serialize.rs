@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize, Serializer, Deserializer};
 use serde::de::Error;
+use super::*;
 
 impl Serialize for NodeAttr {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

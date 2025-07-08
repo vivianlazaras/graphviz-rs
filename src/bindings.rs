@@ -8359,6 +8359,12 @@ unsafe extern "C" {
     #[doc = " Perform a Transitive Reduction on a graph\n @param g  graph to be transformed."]
     pub fn gvToolTred(g: *mut graph_t) -> ::std::os::raw::c_int;
 }
+unsafe extern "C" {
+    pub fn rust_aghead(ptr: *mut Agedge_t) -> *mut Agnode_t;
+}
+unsafe extern "C" {
+    pub fn rust_agtail(ptr: *mut Agedge_t) -> *mut Agnode_t;
+}
 pub type __builtin_va_list = [__va_list_tag; 1usize];
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

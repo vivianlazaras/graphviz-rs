@@ -42,8 +42,8 @@ impl<'c> Graph<'c> {
     /// construct an existing graph from dot structure
     /// useful for when a graph was initially generated from a crate like petgraph, or graphviz-rust
     /// # Arguments
-    /// `dot` - do struct diagram as str reference
-    /// `ctx` - Context used to create the graph see `Context`
+    /// - `dot`: do struct diagram as str reference
+    /// - `ctx`: Context used to create the graph see `Context`
     /// # Note
     /// graph cannot outlive `Context`
     pub fn new<S: AsRef<str>>(dot: S, ctx: &'c Context) -> Self {
@@ -66,13 +66,22 @@ impl<'c> Graph<'c> {
                 nodes.insert(name.clone(), Node { raw: n });
 
                 // Iterate outgoing edges
-                /*let mut e = agfstout(graph, n);
+                let mut e = agfstout(graph, n);
                 while !e.is_null() {
-                    let edge_ptr = agnameof(e as *mut _) as *const c_char;
-                    let edge_name = CStr::from_ptr(edge_ptr).to_string_lossy().into_owned();
-                    edges.insert(edge_name, Edge { raw: e });
+                    
+                    let tail = rust_agtail(e);  // source node pointer
+                    let head = rust_aghead(e);  // destination node pointer
+
+                    let tail_name_ptr = agnameof(tail as *mut _) as *const c_char;
+                    let head_name_ptr = agnameof(head as *mut _) as *const c_char;
+
+                    let tail_name = CStr::from_ptr(tail_name_ptr).to_string_lossy();
+                    let head_name = CStr::from_ptr(head_name_ptr).to_string_lossy();
+
+                    let edge_key = format!("{}->{}", tail_name, head_name);
+                    edges.insert(edge_key, Edge { raw: e });
                     e = agnxtout(graph, e);
-                }*/
+                }
 
                 n = agnxtnode(graph, n);
             }
@@ -87,6 +96,7 @@ impl<'c> Graph<'c> {
         }
     }
 
+    /// create's an empty graph with the given context
     pub fn empty(ctx: &'c Context) -> Self {
         let graph: *mut Agraph_t = unsafe {
             agopen(
@@ -249,7 +259,7 @@ impl<'c> Graph<'c> {
         println!("created cstrings in set_graph_attr, {:?}, {:?}", name_cstr, value_cstr);
 
         if self.graph.is_null() {
-            panic!("graph is null");
+            return Err("graph is null".into());
         }
         let def = CString::new("").unwrap();
         println!("ptr values: {:?}, {:?}, {:?}", self.graph, name_cstr.as_ptr(), value_cstr.as_ptr());
@@ -294,7 +304,23 @@ impl<'c> Graph<'c> {
         }
     }
 
-    pub fn set_layout(&mut self, layout: Layout) {
+    /// Sets the layout engine for the graph (e.g., "dot", "neato").
+    ///
+    /// This method must be called before rendering or exporting the graph,
+    /// as the layout engine determines how the graph is positioned and styled.
+    ///
+    /// # Panics
+    /// * If the layout string contains interior null bytes.
+    /// * If the underlying `gvLayout` call fails (non-zero error code).
+    ///
+    /// # Arguments
+    /// * `layout` - The chosen layout engine as a [`Layout`] enum.
+    ///
+    /// # Example
+    /// ```none
+    /// graph.set_layout(Layout::Dot);
+    /// ```
+    pub fn set_layout(&mut self, layout: Layout) -> Result<(), String> {
         self.layout = Some(layout);
         let layout_str = layout.to_string();
 
@@ -305,16 +331,68 @@ impl<'c> Graph<'c> {
         let result = unsafe { gvLayout(self.ctx.ctx, self.graph, c_layout.as_ptr()) };
 
         if result != 0 {
-            panic!("gvLayout failed with error code {}", result);
+            return Err(format!("gvLayout failed with error code {}", result));
         }
+        Ok(())
     }
 
-    pub fn to_dot(&self) -> Result<String, std::string::FromUtf8Error> {
+    /// Generates the DOT representation of the current graph.
+    ///
+    /// # Panics
+    /// Panics if no layout engine has been set before calling this method.
+    /// Make sure to call [`set_layout`] first.
+    ///
+    /// # Returns
+    /// * `Ok(String)` containing the DOT format of the graph.
+    /// * `Err(std::string::FromUtf8Error)` if the generated data is not valid UTF-8.
+    ///
+    /// # Example
+    /// ```none
+    /// graph.set_layout(Layout::Dot);
+    /// let dot_output = graph.to_dot().unwrap();
+    /// println!("{}", dot_output);
+    /// ```
+    pub fn to_dot(&self) -> Result<String, String> {
         if self.layout.is_none() {
             panic!("called to_dot without setting layout");
         }
-        let data = self.ctx.render(self, OutputFormat::Dot);
-        Ok(String::from_utf8(data)?)
+        let data = self.ctx.render(self, OutputFormat::Dot)?;
+        Ok(String::from_utf8(data).unwrap())
+    }
+
+    /// Creates a new cluster subgraph within this graph.
+    ///
+    /// # Parameters
+    /// - `name`: The name of the cluster (without the `"cluster_"` prefix).
+    ///
+    /// # Returns
+    /// Returns a new `Graph` instance wrapping the created cluster.
+    ///
+    /// # Errors
+    /// Returns `Err` if the cluster could not be created (e.g., due to invalid name or allocation failure).
+    pub fn add_cluster<S: AsRef<str>>(&mut self, name: S) -> Result<Graph<'c>, String> {
+        // Prepend "cluster_" to comply with Graphviz convention
+        let cluster_name = format!("cluster_{}", name.as_ref());
+
+        // Convert to CString; handle potential interior null byte error
+        let c_cluster_name = CString::new(cluster_name)
+            .map_err(|_| "Cluster name contains interior null byte".to_string())?;
+
+        // Call agsubg to create the cluster
+        let cluster_ptr = unsafe { agsubg(self.graph, c_cluster_name.as_ptr() as *mut c_char, 1) };
+
+        if cluster_ptr.is_null() {
+            return Err("Failed to create cluster".into());
+        }
+
+        // Wrap in new Graph struct
+        Ok(Graph {
+            graph: cluster_ptr,
+            layout: None,                    // cluster starts without layout
+            ctx: self.ctx,                   // reuse the same context
+            nodes: HashMap::new(),           // cluster initially empty
+            edges: HashMap::new(),
+        })
     }
 }
 
@@ -388,7 +466,7 @@ impl Context {
     ///
     /// # Panics
     /// Panics if rendering fails or if the format string cannot be converted to a C string.
-    pub fn render(&self, graph: &Graph, format: OutputFormat) -> Vec<u8> {
+    pub fn render(&self, graph: &Graph, format: OutputFormat) -> Result<Vec<u8>, String> {
         let format_cstr = CString::new(format.to_string())
             .expect("Failed to convert output format to CString");
         let result_str = CString::new("").unwrap();
@@ -398,13 +476,13 @@ impl Context {
         unsafe {
             println!("about to render data with ptrs: {:?}, {:?}, {:?}, {:?}, {:?}", self.ctx, graph.graph, format_cstr.as_ptr(), &mut result_ptr, &mut length as *mut usize);
             if gvRenderData(self.ctx, graph.graph, format_cstr.as_ptr(), &mut result_ptr, &mut length as *mut usize) != 0 {
-                panic!("Graphviz render failed");
+                return Err("Graphviz render failed".into());
             }
             println!("after gvRender");
             let output = std::slice::from_raw_parts(result_ptr as *const u8, length).to_vec();
             println!("tried to construct output");
             gvFreeRenderData(result_ptr);
-            output
+            Ok(output)
         }
     }
 }
@@ -447,3 +525,81 @@ impl GraphEngine for Context {
         self.render(graph, format)
     }
 }*/
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::ptr;
+
+    /// Dummy Context for testing.
+    /// Replace with your actual Context initialization if needed.
+    fn dummy_context() -> Context {
+        // adjust this to create an actual context, e.g., Context::new()
+        Context::new()
+    }
+
+    #[test]
+    fn test_graph_new_with_valid_dot() {
+        let ctx = dummy_context();
+        let dot = r#"
+            digraph G {
+                A -> B;
+                B -> C;
+                C -> A;
+                D;
+            }
+        "#;
+
+        let mut graph = Graph::new(dot, &ctx);
+
+        // Make sure nodes were created
+        assert!(graph.nodes.contains_key("A"));
+        assert!(graph.nodes.contains_key("B"));
+        assert!(graph.nodes.contains_key("C"));
+        assert!(graph.nodes.contains_key("D"));
+
+        // Make sure edges were created
+        assert!(!graph.edges.is_empty());
+        // Edge names might vary; check there’s at least the number we expect
+        assert!(graph.edges.len() >= 3);
+
+        let edge_list = graph.edges.keys().map(|k| k.to_string()).collect::<Vec<String>>();
+
+        for edge_name in edge_list.iter() {
+            // Example attributes: color and label
+            let color_attr = EdgeAttr::Color("#ff0000".parse().unwrap());
+            let label_attr = EdgeAttr::LabelDistance(1.5); // replace with actual EdgeAttr variant if needed
+    
+            graph
+                .set_attr_on_edge(edge_name, color_attr.clone())
+                .expect(&format!("Failed to set color attribute on edge {}", edge_name));
+    
+            graph
+                .set_attr_on_edge(edge_name, label_attr.clone())
+                .expect(&format!("Failed to set label attribute on edge {}", edge_name));
+        }
+    }
+    
+    #[test]
+    fn test_graph_new_empty_dot() {
+        let ctx = dummy_context();
+        let dot = "digraph G {}";
+
+        let graph = Graph::new(dot, &ctx);
+
+        assert!(graph.nodes.is_empty());
+        assert!(graph.edges.is_empty());
+    }
+
+    /*#[test]
+    fn test_graph_new_invalid_dot() {
+        let ctx = dummy_context();
+        let dot = "invalid_dot {";
+
+        // Graphviz will likely still create a graph but with no nodes/edges
+        let graph = Graph::new(dot, &ctx);
+        assert!(graph.nodes.is_empty() || graph.nodes.len() == 1);
+        // There shouldn’t be edges if dot is invalid
+        assert!(graph.edges.is_empty());
+    }*/
+}

@@ -18,6 +18,6 @@ fn main() {
     // Layout the graph using `dot`
     graph.set_layout(Layout::Dot);
     // Render the graph to SVG format
-    let svg = ctx.render(&graph, OutputFormat::Svg);
+    let svg = ctx.render(&graph, OutputFormat::Svg).unwrap();
     std::fs::write("example.svg", svg).unwrap();
 }

@@ -2,6 +2,8 @@
 pub mod color;
 /// Defines supported shapes for graphviz.
 pub mod shape;
+#[cfg(feature = "serde")]
+pub mod serialize;
 use crate::style::shape::{ArrowType, NodeShape};
 use color::Color;
 use std::ffi::CString;
@@ -101,23 +103,83 @@ impl_display_fromstr_lower!(ClusterStyle {
 });
 
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde_derive::Serialize, serde_derive::Deserialize)
-)]
 pub enum NodeAttribute {
     Common(CommonAttr),
     NodeAttr(NodeAttr)
 }
 
+impl Attribute for NodeAttribute {
+    fn to_cstrings(&self) -> (CString, CString) {
+        
+        match self {
+            NodeAttribute::Common(c) => c.to_cstrings(),
+            NodeAttribute::NodeAttr(e) => e.to_cstrings(),
+        }
+    }
+}
+
+impl TryFrom<(&str, &str)> for NodeAttribute {
+    type Error = &'static str;
+
+    fn try_from((key, value): (&str, &str)) -> Result<Self, Self::Error> {
+        if let Ok(common) = CommonAttr::try_from((key, value)) {
+            Ok(NodeAttribute::Common(common))
+        } else if let Ok(node_attr) = NodeAttr::try_from((key, value)) {
+            Ok(NodeAttribute::NodeAttr(node_attr))
+        } else {
+            Err("Unknown NodeAttribute key or invalid value")
+        }
+    }
+}
+
+impl fmt::Display for NodeAttribute {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use NodeAttribute::*;
+        match self {
+            Common(c) => write!(f, "{}", c),
+            NodeAttr(n) => write!(f, "{}", n)
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde_derive::Serialize, serde_derive::Deserialize)
-)]
 pub enum EdgeAttribute {
     Common(CommonAttr),
     EdgeAttr(EdgeAttr),
+}
+
+impl Attribute for EdgeAttribute {
+    fn to_cstrings(&self) -> (CString, CString) {
+        
+        match self {
+            EdgeAttribute::Common(c) => c.to_cstrings(),
+            EdgeAttribute::EdgeAttr(e) => e.to_cstrings(),
+        }
+    }
+}
+
+impl TryFrom<(&str, &str)> for EdgeAttribute {
+    type Error = &'static str;
+
+    fn try_from((key, value): (&str, &str)) -> Result<Self, Self::Error> {
+        if let Ok(common) = CommonAttr::try_from((key, value)) {
+            Ok(EdgeAttribute::Common(common))
+        } else if let Ok(edge_attr) = EdgeAttr::try_from((key, value)) {
+            Ok(EdgeAttribute::EdgeAttr(edge_attr))
+        } else {
+            Err("Unknown EdgeAttribute key or invalid value")
+        }
+    }
+}
+
+impl fmt::Display for EdgeAttribute {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use EdgeAttribute::*;
+        match self {
+            Common(c) => write!(f, "{}", c),
+            EdgeAttr(e) => write!(f, "{}", e)
+        }
+    }
 }
 
 impl FromStr for NodeAttribute {
@@ -299,10 +361,6 @@ pub enum GraphvizAttr {
 
 /// Attributes specific to nodes.
 #[derive(Clone, PartialEq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde_derive::Serialize, serde_derive::Deserialize)
-)]
 pub enum NodeAttr {
     /// Shape of the node (e.g. ellipse, box)
     Shape(NodeShape),
@@ -371,32 +429,38 @@ impl NodeAttr {
     }
 }
 
-impl std::str::FromStr for NodeAttr {
+impl TryFrom<(&str, &str)> for NodeAttr {
+    type Error = &'static str;
+
+    fn try_from((key, value): (&str, &str)) -> Result<Self, Self::Error> {
+        match key {
+            "shape"      => value.parse().map(NodeAttr::Shape).map_err(|_| "Invalid shape"),
+            "style"      => value.parse().map(NodeAttr::Style).map_err(|_| "Invalid style"),
+            "color"      => value.parse().map(NodeAttr::Color).map_err(|_| "Invalid color"),
+            "fillcolor"  => value.parse().map(NodeAttr::FillColor).map_err(|_| "Invalid fillcolor"),
+            "labelloc"   => value.parse().map(NodeAttr::LabelLoc).map_err(|_| "Invalid labelloc"),
+            "width"      => value.parse().map(NodeAttr::Width).map_err(|_| "Invalid width"),
+            "height"     => value.parse().map(NodeAttr::Height).map_err(|_| "Invalid height"),
+            "fixedsize"  => match value {
+                "true"  => Ok(NodeAttr::FixedSize(true)),
+                "false" => Ok(NodeAttr::FixedSize(false)),
+                _       => Err("Invalid fixedsize"),
+            },
+            "image"      => Ok(NodeAttr::Image(value.to_string())),
+            "peripheries"=> value.parse().map(NodeAttr::Peripheries).map_err(|_| "Invalid peripheries"),
+            _            => Err("Unknown NodeAttr key"),
+        }
+    }
+}
+
+impl FromStr for NodeAttr {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if let Some((key, value)) = parse_key_value(s) {
-            match key {
-                "shape" => value.parse().map(NodeAttr::Shape).map_err(|_| "Invalid shape"),
-                "style" => value.parse().map(NodeAttr::Style).map_err(|_| "Invalid style"),
-                "color" => value.parse().map(NodeAttr::Color).map_err(|_| "Invalid color"),
-                "fillcolor" => value.parse().map(NodeAttr::FillColor).map_err(|_| "Invalid color"),
-                "labelloc" => value.parse().map(NodeAttr::LabelLoc).map_err(|_| "Invalid labelloc"),
-                "width" => value.parse().map(NodeAttr::Width).map_err(|_| "Invalid width"),
-                "height" => value.parse().map(NodeAttr::Height).map_err(|_| "Invalid height"),
-                "fixedsize" => {
-                    match value {
-                        "true" => Ok(NodeAttr::FixedSize(true)),
-                        "false" => Ok(NodeAttr::FixedSize(false)),
-                        _ => Err("Invalid fixedsize")
-                    }
-                },
-                "image" => Ok(NodeAttr::Image(value.to_string())),
-                "peripheries" => value.parse().map(NodeAttr::Peripheries).map_err(|_| "Invalid peripheries"),
-                _ => Err("Unknown NodeAttr key"),
-            }
+            NodeAttr::try_from((key, value))
         } else {
-            Err("Invalid format")
+            Err("Invalid NodeAttr format: expected key=\"value\"")
         }
     }
 }
@@ -427,10 +491,6 @@ impl fmt::Display for NodeAttr {
 
 /// Attributes specific to edges.
 #[derive(Clone, PartialEq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde_derive::Serialize, serde_derive::Deserialize)
-)]
 pub enum EdgeAttr {
     ArrowHead(ArrowType),
     ArrowTail(ArrowType),
@@ -498,32 +558,38 @@ impl EdgeAttr {
     }
 }
 
-impl std::str::FromStr for EdgeAttr {
+impl TryFrom<(&str, &str)> for EdgeAttr {
+    type Error = &'static str;
+
+    fn try_from((key, value): (&str, &str)) -> Result<Self, Self::Error> {
+        match key {
+            "arrowhead"     => value.parse().map(EdgeAttr::ArrowHead).map_err(|_| "Invalid arrowhead"),
+            "arrowtail"     => value.parse().map(EdgeAttr::ArrowTail).map_err(|_| "Invalid arrowtail"),
+            "dir"           => value.parse().map(EdgeAttr::Dir).map_err(|_| "Invalid dir"),
+            "weight"        => value.parse().map(EdgeAttr::Weight).map_err(|_| "Invalid weight"),
+            "minlen"        => value.parse().map(EdgeAttr::MinLen).map_err(|_| "Invalid minlen"),
+            "labeldistance" => value.parse().map(EdgeAttr::LabelDistance).map_err(|_| "Invalid labeldistance"),
+            "labelangle"    => value.parse().map(EdgeAttr::LabelAngle).map_err(|_| "Invalid labelangle"),
+            "constraint"    => match value {
+                "true"  => Ok(EdgeAttr::Constraint(true)),
+                "false" => Ok(EdgeAttr::Constraint(false)),
+                _       => Err("Invalid constraint"),
+            },
+            "style"         => value.parse().map(EdgeAttr::Style).map_err(|_| "Invalid style"),
+            "color"         => value.parse().map(EdgeAttr::Color).map_err(|_| "Invalid color"),
+            _               => Err("Unknown EdgeAttr key"),
+        }
+    }
+}
+
+impl FromStr for EdgeAttr {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if let Some((key, value)) = parse_key_value(s) {
-            match key {
-                "arrowhead" => value.parse().map(EdgeAttr::ArrowHead).map_err(|_| "Invalid arrowhead"),
-                "arrowtail" => value.parse().map(EdgeAttr::ArrowTail).map_err(|_| "Invalid arrowtail"),
-                "dir" => value.parse().map(EdgeAttr::Dir).map_err(|_| "Invalid dir"),
-                "weight" => value.parse().map(EdgeAttr::Weight).map_err(|_| "Invalid weight"),
-                "minlen" => value.parse().map(EdgeAttr::MinLen).map_err(|_| "Invalid minlen"),
-                "labeldistance" => value.parse().map(EdgeAttr::LabelDistance).map_err(|_| "Invalid labeldistance"),
-                "labelangle" => value.parse().map(EdgeAttr::LabelAngle).map_err(|_| "Invalid labelangle"),
-                "constraint" => {
-                    match value {
-                        "true" => Ok(EdgeAttr::Constraint(true)),
-                        "false" => Ok(EdgeAttr::Constraint(false)),
-                        _ => Err("Invalid constraint")
-                    }
-                },
-                "style" => value.parse().map(EdgeAttr::Style).map_err(|_| "Invalid style"),
-                "color" => value.parse().map(EdgeAttr::Color).map_err(|_| "Invalid color"),
-                _ => Err("Unknown EdgeAttr key"),
-            }
+            EdgeAttr::try_from((key, value))
         } else {
-            Err("Invalid format")
+            Err("Invalid EdgeAttr format: expected key=\"value\"")
         }
     }
 }
@@ -554,10 +620,6 @@ impl fmt::Display for EdgeAttr {
 
 /// Attributes specific to the entire graph.
 #[derive(Clone, PartialEq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde_derive::Serialize, serde_derive::Deserialize)
-)]
 pub enum GraphAttr {
     Layout(crate::Layout),
     RankDir(RankDir),
@@ -620,37 +682,43 @@ impl GraphAttr {
     }
 }
 
-impl std::str::FromStr for GraphAttr {
+impl TryFrom<(&str, &str)> for GraphAttr {
+    type Error = &'static str;
+
+    fn try_from((key, value): (&str, &str)) -> Result<Self, Self::Error> {
+        match key {
+            "layout"   => value.parse().map(GraphAttr::Layout).map_err(|_| "Invalid layout"),
+            "rankdir"  => value.parse().map(GraphAttr::RankDir).map_err(|_| "Invalid rankdir"),
+            "bgcolor"  => value.parse().map(GraphAttr::BgColor).map_err(|_| "Invalid bgcolor"),
+            "center"   => match value {
+                "true"  => Ok(GraphAttr::Center(true)),
+                "false" => Ok(GraphAttr::Center(false)),
+                _       => Err("Invalid center value"),
+            },
+            "dpi"      => value.parse().map(GraphAttr::DPI).map_err(|_| "Invalid dpi"),
+            "margin"   => value.parse().map(GraphAttr::Margin).map_err(|_| "Invalid margin"),
+            "nodesep"  => value.parse().map(GraphAttr::NodeSep).map_err(|_| "Invalid nodesep"),
+            "ranksep"  => value.parse().map(GraphAttr::RankSep).map_err(|_| "Invalid ranksep"),
+            "size"     => {
+                let nums: Vec<&str> = value.split(',').collect();
+                if nums.len() != 2 { return Err("Invalid size: expected format width,height"); }
+                let w = nums[0].parse::<f32>().map_err(|_| "Invalid size width")?;
+                let h = nums[1].parse::<f32>().map_err(|_| "Invalid size height")?;
+                Ok(GraphAttr::Size((w, h)))
+            }
+            _ => Err("Unknown GraphAttr key"),
+        }
+    }
+}
+
+impl FromStr for GraphAttr {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if let Some((key, value)) = parse_key_value(s) {
-            match key {
-                "layout" => value.parse().map(GraphAttr::Layout).map_err(|_| "Invalid layout"),
-                "rankdir" => value.parse().map(GraphAttr::RankDir).map_err(|_| "Invalid rankdir"),
-                "bgcolor" => value.parse().map(GraphAttr::BgColor).map_err(|_| "Invalid color"),
-                "center" => {
-                    match value {
-                        "true" => Ok(GraphAttr::Center(true)),
-                        "false" => Ok(GraphAttr::Center(false)),
-                        _ => Err("Invalid center value")
-                    }
-                },
-                "dpi" => value.parse().map(GraphAttr::DPI).map_err(|_| "Invalid dpi"),
-                "margin" => value.parse().map(GraphAttr::Margin).map_err(|_| "Invalid margin"),
-                "nodesep" => value.parse().map(GraphAttr::NodeSep).map_err(|_| "Invalid nodesep"),
-                "ranksep" => value.parse().map(GraphAttr::RankSep).map_err(|_| "Invalid ranksep"),
-                "size" => {
-                    let nums: Vec<&str> = value.split(',').collect();
-                    if nums.len() != 2 { return Err("Invalid size"); }
-                    let w = nums[0].parse::<f32>().map_err(|_| "Invalid size width")?;
-                    let h = nums[1].parse::<f32>().map_err(|_| "Invalid size height")?;
-                    Ok(GraphAttr::Size((w, h)))
-                }
-                _ => Err("Unknown GraphAttr key"),
-            }
+            GraphAttr::try_from((key, value))
         } else {
-            Err("Invalid format")
+            Err("Invalid GraphAttr format: expected key=\"value\"")
         }
     }
 }
@@ -757,23 +825,31 @@ impl fmt::Display for CommonAttr {
     }
 }
 
-impl std::str::FromStr for CommonAttr {
+impl TryFrom<(&str, &str)> for CommonAttr {
+    type Error = &'static str;
+
+    fn try_from((key, value): (&str, &str)) -> Result<Self, Self::Error> {
+        match key {
+            "label"     => Ok(CommonAttr::Label(value.to_string())),
+            "fontsize"  => value.parse().map(CommonAttr::FontSize).map_err(|_| "Invalid fontsize"),
+            "fontname"  => Ok(CommonAttr::FontName(value.to_string())),
+            "id"        => Ok(CommonAttr::Id(value.to_string())),
+            "class"     => Ok(CommonAttr::Class(value.to_string())),
+            "tooltip"   => Ok(CommonAttr::Tooltip(value.to_string())),
+            "url"       => Ok(CommonAttr::URL(value.to_string())),
+            _           => Err("Unknown CommonAttr key"),
+        }
+    }
+}
+
+impl FromStr for CommonAttr {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if let Some((key, value)) = parse_key_value(s) {
-            match key {
-                "label" => Ok(CommonAttr::Label(value.to_string())),
-                "fontsize" => value.parse().map(CommonAttr::FontSize).map_err(|_| "Invalid fontsize"),
-                "fontname" => Ok(CommonAttr::FontName(value.to_string())),
-                "id" => Ok(CommonAttr::Id(value.to_string())),
-                "class" => Ok(CommonAttr::Class(value.to_string())),
-                "tooltip" => Ok(CommonAttr::Tooltip(value.to_string())),
-                "url" => Ok(CommonAttr::URL(value.to_string())),
-                _ => Err("Unknown CommonAttr key"),
-            }
+            CommonAttr::try_from((key, value))
         } else {
-            Err("Invalid format")
+            Err("Invalid CommonAttr format: expected key=\"value\"")
         }
     }
 }
@@ -906,5 +982,230 @@ mod tests {
 
         let attr = CommonAttr::Tooltip("tip".into());
         assert_eq!(format!("{}", attr), format!("{:?}", attr));
+    }
+
+    #[test]
+    fn test_display_cluster_attr() {
+        let attr = ClusterAttr::Style(ClusterStyle::Filled);
+        assert_eq!(attr.to_string(), "style=\"filled\"");
+
+        let attr = ClusterAttr::Color(Color::from_str("#ff0000").unwrap());
+        assert_eq!(attr.to_string(), "color=\"#ff0000\"");
+
+        let attr = ClusterAttr::LabelLoc(LabelLoc::Top);
+        assert_eq!(attr.to_string(), "labelloc=\"t\"");
+
+        let attr = ClusterAttr::Peripheries(3);
+        assert_eq!(attr.to_string(), "peripheries=\"3\"");
+    }
+
+    #[test]
+    fn test_fromstr_cluster_attr() {
+        let attr = ClusterAttr::from_str("style=filled").unwrap();
+        assert_eq!(attr, ClusterAttr::Style(ClusterStyle::Filled));
+
+        let attr = ClusterAttr::from_str("color=\"#00ff00\"").unwrap();
+        assert_eq!(attr, ClusterAttr::Color(Color::from_str("#00ff00").unwrap()));
+
+        let attr = ClusterAttr::from_str("labelloc=c").unwrap();
+        assert_eq!(attr, ClusterAttr::LabelLoc(LabelLoc::Center));
+
+        let attr = ClusterAttr::from_str("peripheries=5").unwrap();
+        assert_eq!(attr, ClusterAttr::Peripheries(5));
+    }
+
+    #[test]
+    fn test_display_cluster_attribute() {
+        let attr = ClusterAttribute::Common(CommonAttr::Label("MyCluster".into()));
+        assert_eq!(attr.to_string(), "label=\"MyCluster\"");
+
+        let attr = ClusterAttribute::ClusterAttr(ClusterAttr::Peripheries(2));
+        assert_eq!(attr.to_string(), "peripheries=\"2\"");
+    }
+
+    #[test]
+    fn test_fromstr_cluster_attribute() {
+        let attr = ClusterAttribute::from_str("label=\"MyCluster\"").unwrap();
+        assert_eq!(attr, ClusterAttribute::Common(CommonAttr::Label("MyCluster".into())));
+
+        let attr = ClusterAttribute::from_str("style=striped").unwrap();
+        assert_eq!(attr, ClusterAttribute::ClusterAttr(ClusterAttr::Style(ClusterStyle::Striped)));
+    }
+
+    #[test]
+    fn test_fromstr_invalid_cluster_attr() {
+        let err = ClusterAttr::from_str("invalid=whatever");
+        assert!(err.is_err());
+
+        let err = ClusterAttr::from_str("style=nonexistent");
+        assert!(err.is_err());
+
+        let err = ClusterAttr::from_str("peripheries=notanumber");
+        assert!(err.is_err());
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn test_serde_cluster_attr() {
+        let attr = ClusterAttr::Style(ClusterStyle::Rounded);
+        let serialized = serde_json::to_string(&attr).unwrap();
+        assert_eq!(serialized, "\"style=\\\"rounded\\\"\"");
+
+        let deserialized: ClusterAttr = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(attr, deserialized);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn test_serde_cluster_attribute() {
+        let attr = ClusterAttribute::Common(CommonAttr::Id("cluster1".into()));
+        let serialized = serde_json::to_string(&attr).unwrap();
+        assert_eq!(serialized, "\"id=\\\"cluster1\\\"\"");
+
+        let deserialized: ClusterAttribute = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(attr, deserialized);
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ClusterAttr {
+    Style(ClusterStyle),
+    Color(Color),
+    LabelLoc(LabelLoc),
+    Peripheries(u32),
+}
+
+impl Attribute for ClusterAttr {
+    fn to_cstrings(&self) -> (CString, CString) {
+        use ClusterAttr::*;
+        match self {
+            Style(s) => (CString::new("style").unwrap(), CString::new(s.to_string()).unwrap()),
+            Color(c) => (CString::new("color").unwrap(), CString::new(c.to_string()).unwrap()),
+            LabelLoc(l) => (CString::new("labelloc").unwrap(), CString::new(l.to_string()).unwrap()),
+            Peripheries(v) => (CString::new("peripheries").unwrap(), CString::new(v.to_string()).unwrap()),
+        }
+    }
+}
+
+impl fmt::Display for ClusterAttr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use ClusterAttr::*;
+        match self {
+            Style(s) => write!(f, "style=\"{}\"", s),
+            Color(c) => write!(f, "color=\"{}\"", c),
+            LabelLoc(l) => write!(f, "labelloc=\"{}\"", l),
+            Peripheries(v) => write!(f, "peripheries=\"{}\"", v),
+        }
+    }
+}
+
+impl FromStr for ClusterAttr {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // parse string of form key="value" or key=value
+        let parts: Vec<&str> = s.splitn(2, '=').collect();
+        if parts.len() != 2 {
+            return Err(format!("Invalid cluster attribute: '{}'", s));
+        }
+
+        let key = parts[0].trim().to_lowercase();
+        let mut value = parts[1].trim();
+        // remove quotes if present
+        if value.starts_with('"') && value.ends_with('"') {
+            value = &value[1..value.len()-1];
+        }
+
+        match key.as_str() {
+            "style" => {
+                let parsed = ClusterStyle::from_str(value).map_err(|_| format!("Invalid style: {}", value))?;
+                Ok(ClusterAttr::Style(parsed))
+            }
+            "color" => {
+                let parsed = Color::from_str(value).map_err(|_| format!("Invalid color: {}", value))?;
+                Ok(ClusterAttr::Color(parsed))
+            }
+            "labelloc" => {
+                let parsed = LabelLoc::from_str(value).map_err(|_| format!("Invalid labelloc: {}", value))?;
+                Ok(ClusterAttr::LabelLoc(parsed))
+            }
+            "peripheries" => {
+                let parsed = value.parse::<u32>().map_err(|_| format!("Invalid peripheries: {}", value))?;
+                Ok(ClusterAttr::Peripheries(parsed))
+            }
+            _ => Err(format!("Unknown cluster attribute: '{}'", key)),
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for ClusterAttr {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where S: serde::Serializer {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for ClusterAttr {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where D: serde::Deserializer<'de> {
+        let s = String::deserialize(deserializer)?;
+        ClusterAttr::from_str(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ClusterAttribute {
+    Common(CommonAttr),
+    ClusterAttr(ClusterAttr),
+}
+
+impl Attribute for ClusterAttribute {
+    fn to_cstrings(&self) -> (CString, CString) {
+        match self {
+            ClusterAttribute::Common(attr) => attr.to_cstrings(),
+            ClusterAttribute::ClusterAttr(attr) => attr.to_cstrings(),
+        }
+    }
+}
+
+impl fmt::Display for ClusterAttribute {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ClusterAttribute::Common(attr) => write!(f, "{}", attr),
+            ClusterAttribute::ClusterAttr(attr) => write!(f, "{}", attr),
+        }
+    }
+}
+
+impl FromStr for ClusterAttribute {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Ok(attr) = CommonAttr::from_str(s) {
+            Ok(ClusterAttribute::Common(attr))
+        } else if let Ok(attr) = ClusterAttr::from_str(s) {
+            Ok(ClusterAttribute::ClusterAttr(attr))
+        } else {
+            Err(format!("Invalid cluster attribute: '{}'", s))
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for ClusterAttribute {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where S: serde::Serializer {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for ClusterAttribute {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where D: serde::Deserializer<'de> {
+        let s = String::deserialize(deserializer)?;
+        ClusterAttribute::from_str(&s).map_err(serde::de::Error::custom)
     }
 }

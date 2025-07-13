@@ -23,12 +23,29 @@
           pname = "graphviz-rs";
           version = "0.1.0";
           nativeBuildInputs = [
-            staticGraphviz pkgs.pkg-config
+            staticGraphviz pkgs.pkg-config pkgs.llvmPackages.libclang.lib
           ];
           src = ./.;
           cargoLock = {
             lockFile = ./Cargo.lock;
           };
+
+          # Export build-time environment variables so cc-rs & bindgen can see them
+          buildInputs = [ staticGraphviz pkgs.zlib pkgs.expat ];
+
+          # Setup needed env vars so that build.rs, cc, and bindgen can find headers and libs
+          # These env vars are honored by cc-rs, bindgen, and pkg-config
+          # See https://github.com/rust-lang/cc-rs/blob/master/README.md#environment-variables
+          
+          LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
+          PKG_CONFIG_PATH = "${staticGraphviz}/lib/pkgconfig";
+
+          # If your crate has a build.rs that calls bindgen, set BINDGEN_EXTRA_CLANG_ARGS
+          BINDGEN_EXTRA_CLANG_ARGS = ''
+            -I${staticGraphviz}/include
+            -I${pkgs.llvmPackages.libclang.lib}/lib/clang/19/include
+            -I${pkgs.glibc.dev}/include
+          '';
         };
 
         # Static Graphviz build derivation
@@ -39,7 +56,7 @@
           in if matches == null then fullVersion else matches[0];
 
         staticGraphviz = pkgs.stdenv.mkDerivation rec {
-          pname = "graphviz-libs-onll";
+          pname = "graphviz-libs-only";
           version = "13.0.0";
 
           src = pkgs.fetchFromGitLab {

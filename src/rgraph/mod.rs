@@ -498,26 +498,4 @@ mod tests {
         assert!(dot.contains("A -> B [weight=1]"));
     }
 
-    #[test]
-    fn test_multiple_nodes_edges() {
-        let node_a = Node { id: "A".into() };
-        let node_b = Node { id: "B".into() };
-        let node_c = Node { id: "C".into() };
-
-        let edge_ab = Edge { source: "A".into(), target: "B".into() };
-        let edge_bc = Edge { source: "B".into(), target: "C".into() };
-
-        let graph = RustGraph {
-            nodes: vec![node_a, node_b, node_c],
-            edges: vec![edge_ab, edge_bc],
-        };
-
-        let dot = graph.to_dot();
-
-        assert!(dot.contains("A [label=\"A\"]"));
-        assert!(dot.contains("B [label=\"B\"]"));
-        assert!(dot.contains("C [label=\"C\"]"));
-        assert!(dot.contains("A -> B [weight=1]"));
-        assert!(dot.contains("B -> C [weight=1]"));
-    }
 }

@@ -156,25 +156,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8d1add55171497b4705a648c6b583acafb01d58050a51727785f0b2c8e0a2b2"
 
 [[package]]
-name = "graphviz"
-version = "0.1.0"
-dependencies = [
- "bindgen",
- "cc",
- "libc",
- "logos",
- "pkg-config",
- "serde",
- "serde-wasm-bindgen",
- "serde_derive",
- "serde_json",
- "structopt",
- "uuid",
- "walkdir",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "heck"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -846,4 +827,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6f42320e61fe2cfd34354ecb597f86f413484a798ba44a8ca1165c58d42da6c1"
 dependencies = [
  "bitflags 2.9.1",
+]
+
+[[package]]
+name = "wrappedviz"
+version = "0.1.0"
+dependencies = [
+ "bindgen",
+ "cc",
+ "libc",
+ "logos",
+ "pkg-config",
+ "serde",
+ "serde-wasm-bindgen",
+ "serde_derive",
+ "serde_json",
+ "structopt",
+ "uuid",
+ "walkdir",
+ "wasm-bindgen",
 ]

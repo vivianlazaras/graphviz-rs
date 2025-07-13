@@ -64,6 +64,7 @@ fn main() {
     let bindings_enabled = std::env::var("CARGO_FEATURE_BINDINGS").is_ok();
 
     if bindings_enabled && !target.contains("wasm32") {
+        #[cfg(all(feature = "bindings", not(target_arch = "wasm32")))]
         generate_bindings();
     } else if bindings_enabled && target.starts_with("wasm32") {
         println!("target: {} bindings enabled: {}", target, bindings_enabled);

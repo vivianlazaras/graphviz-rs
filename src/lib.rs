@@ -4,6 +4,8 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(improper_ctypes)]
+#![allow(unsafe_code)]
+#![allow(clippy::useless_transmute, clippy::transmute_ptr_to_ptr, clippy::transmute_ptr_to_ref)]
 
 //! # graphviz
 //!

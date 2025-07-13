@@ -22,6 +22,9 @@
         rustPackage = pkgs.rustPlatform.buildRustPackage {
           pname = "graphviz-rs";
           version = "0.1.0";
+          nativeBuildInputs = [
+            staticGraphviz pkgs.pkg-config
+          ];
           src = ./.;
           cargoLock = {
             lockFile = ./Cargo.lock;
@@ -52,12 +55,14 @@
             pkgs.makeWrapper
             pkgs.python3
             pkgs.bison
+            pkgs.pkg-config
             pkgs.flex
           ];
 
           buildInputs = [
             pkgs.libpng
             pkgs.libjpeg
+            pkgs.pkg-config
             pkgs.expat
             pkgs.fontconfig
             pkgs.gd
@@ -128,7 +133,7 @@
           # Combined default package: Graphviz
           default = pkgs.symlinkJoin {
             name = "graphviz-rs";
-            paths = [ staticGraphviz ];
+            paths = [ rustPackage staticGraphviz ];
           };
 
           # Individual packages available
@@ -160,7 +165,7 @@
               export LIBCLANG_PATH=${pkgs.llvmPackages.libclang.lib}/lib
               export INCLUDE_DIR=${staticGraphviz}/include/
               export PKG_CONFIG_PATH=${staticGraphviz}/lib/pkgconfig
-              export BINDGEN_EXTRA_CLANG_ARGS="$(pkg-config --cflags libgvc) \
+              export BINDGEN_EXTRA_CLANG_ARGS="$(pkg_config_exec --cflags libgvc) \
                 -I${pkgs.llvmPackages.libclang.lib}/lib/clang/19/include \
                 -I${pkgs.glibc.dev}/include"
             '';

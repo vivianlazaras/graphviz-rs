@@ -1,24 +1,42 @@
 {
-
-  description = "Static Graphviz build for Rust FFI";
+  description = "Combined flake with Rust/Go projects and static Graphviz build";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, flake-utils, rust-overlay }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs { inherit system; };
+        overlays = [ rust-overlay.outputs.overlays.default ];
+        pkgs = import nixpkgs {
+          inherit system overlays;
+        };
+
+        # Rust and Go packages
+
+        rustToolchain = pkgs.rust-bin.stable.latest.default;
+
+        rustPackage = pkgs.rustPlatform.buildRustPackage {
+          pname = "graphviz-rs";
+          version = "0.1.0";
+          src = ./.;
+          cargoLock = {
+            lockFile = ./Cargo.lock;
+          };
+        };
+
+        # Static Graphviz build derivation
 
         fullVersion = pkgs.llvmPackages.libclang.lib.version;
         majorVersion =
           let matches = builtins.match "^([0-9]+)" fullVersion;
           in if matches == null then fullVersion else matches[0];
 
-        static-graphviz = pkgs.stdenv.mkDerivation rec {
-          pname = "static-graphviz-libs-only";
+        staticGraphviz = pkgs.stdenv.mkDerivation rec {
+          pname = "graphviz-libs-onll";
           version = "13.0.0";
 
           src = pkgs.fetchFromGitLab {
@@ -56,11 +74,9 @@
             "--without-x"
             "--disable-x"
 
-            # core features
             "--enable-gvc"
             "--enable-plugin"
 
-            # known working options
             "--enable-ast"
             "--enable-common"
             "--enable-fdpgen"
@@ -71,7 +87,6 @@
             "--enable-twopigen"
             "--enable-xdot"
 
-            # converted from directory names
             "--enable-cdt"
             "--enable-dotgen"
             "--enable-glcomp"
@@ -107,32 +122,50 @@
 
           enableParallelBuilding = true;
         };
+
       in {
-        packages.default = static-graphviz;
+        packages = {
+          # Combined default package: Graphviz
+          default = pkgs.symlinkJoin {
+            name = "graphviz-rs";
+            paths = [ staticGraphviz ];
+          };
 
-        devShells.default = pkgs.mkShell {
-          name = "graphviz-static-dev";
-          packages = [
-            static-graphviz
-            pkgs.pkg-config
-            pkgs.libclang
-            pkgs.clang
-            pkgs.zlib
-            pkgs.libxml2
-            pkgs.expat
-            pkgs.llvmPackages.libclang
-          ];
-
-          shellHook = ''
-            echo "Static Graphviz with libgvc and libcgraph ready for FFI."
-            echo "Using clang version ${pkgs.llvmPackages.libclang.lib.version}"
-            export LIBCLANG_PATH=${pkgs.llvmPackages.libclang.lib}/lib
-            export INCLUDE_DIR=${static-graphviz}/include/
-            export PKG_CONFIG_PATH=${static-graphviz}/lib/pkgconfig
-            export BINDGEN_EXTRA_CLANG_ARGS="$(pkg-config --cflags libgvc) \
-              -I${pkgs.llvmPackages.libclang.lib}/lib/clang/19/include \
-              -I${pkgs.glibc.dev}/include"
-          '';
+          # Individual packages available
+          static-graphviz = staticGraphviz;
         };
-      });
+
+        devShells = {
+          default = pkgs.mkShell {
+            buildInputs = [
+              rustToolchain
+              pkgs.go
+              pkgs.apacheHttpd
+              pkgs.pkg-config
+              pkgs.openssl
+              pkgs.gorm-gentool
+              staticGraphviz
+              pkgs.pkg-config
+              pkgs.libclang
+              pkgs.clang
+              pkgs.zlib
+              pkgs.libxml2
+              pkgs.expat
+              pkgs.llvmPackages.libclang
+            ];
+
+            shellHook = ''
+              echo "Rust and Go dev environment loaded with Static Graphviz support."
+              echo "Using clang version ${pkgs.llvmPackages.libclang.lib.version}"
+              export LIBCLANG_PATH=${pkgs.llvmPackages.libclang.lib}/lib
+              export INCLUDE_DIR=${staticGraphviz}/include/
+              export PKG_CONFIG_PATH=${staticGraphviz}/lib/pkgconfig
+              export BINDGEN_EXTRA_CLANG_ARGS="$(pkg-config --cflags libgvc) \
+                -I${pkgs.llvmPackages.libclang.lib}/lib/clang/19/include \
+                -I${pkgs.glibc.dev}/include"
+            '';
+          };
+        };
+      }
+    );
 }

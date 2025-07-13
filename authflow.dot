@@ -1,0 +1,32 @@
+digraph authflow {
+    node [shape=box]
+
+    PageRequest [label="user requested page"]
+    User [label="user"]
+    Login [label="user login web page"]
+    LoginRoute [label="login post route"]
+    APILogin [label="api login"]
+    db [label="database"]
+    APICall [label="api call"]
+
+    // Intermediate label nodes
+    reqProtectedPage [label="user requests a protected page"]
+    clickSubmit [label="user clicks submit"]
+    fwdToAPI [label="Login Route forwards request to API server"]
+    lookupUser [label="api looks up user by email, subject"]
+    verifyPassword [label="api verifies the returned password hash against the user's password"]
+    returnJWT [label="api route returns a json web token"]
+    redirectWithJWT [label="user gets redirected back with JWT cookie"]
+    apiCallWithJWT [label="requested page makes API call with JWT bearer"]
+
+    // Connect original nodes via label nodes
+    User -> reqProtectedPage -> PageRequest
+    PageRequest -> Login
+    Login -> clickSubmit -> LoginRoute
+    LoginRoute -> fwdToAPI -> APILogin
+    APILogin -> lookupUser -> db
+    db -> verifyPassword -> returnJWT
+    returnJWT -> LoginRoute
+    LoginRoute -> redirectWithJWT -> PageRequest
+    PageRequest -> apiCallWithJWT -> APICall
+}

@@ -10,6 +10,7 @@ libc = { version = "0.2", optional = true }
 logos = "0.15.0"
 serde = { version = "1.0.219", optional = true }
 serde_derive = { version = "1.0.219", optional = true } 
+structopt = "0.3.26"
 uuid = { version = "1.17.0", features = ["v4", "serde"]}
 
 [features]

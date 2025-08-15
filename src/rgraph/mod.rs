@@ -2,9 +2,9 @@
 //! converted into a Graph type, but supports all of the rust tooling
 //! especially serialization, deserialization, etc
 //!
-#[cfg(dest_arch = "wasm32")]
+#[cfg(target_arch = "wasm32")]
 pub mod wasm;
-#[cfg(dest_arch = "wasm32")]
+#[cfg(target_arch = "wasm32")]
 pub use wasm::*;
 use std::collections::HashMap;
 use crate::{CompatNode, CompatEdge, CompatCluster, CompatGraph};
@@ -191,11 +191,11 @@ impl Edge {
 }
 
 impl CompatEdge for Edge {
-    fn new<S: AsRef<str>, I: AsRef<str>, U: AsRef<str>, D: AsRef<str>>(id: I, label: U, source: S, dest: D) -> Self {
+    fn new<S: AsRef<str>, I: AsRef<str>, D: AsRef<str>>(id: I, source: S, dest: D) -> Self {
         Self {
             id: id.as_ref().to_string(),
             source: source.as_ref().to_string(),
-            dest: source.as_ref().to_string(),
+            dest: dest.as_ref().to_string(),
             attributes: Vec::new(),
         }
     }
@@ -359,7 +359,6 @@ fn test_edge_display_and_parse() {
 
     let edge = Edge {
         id,
-        label: "my edge".into(),
         source,
         dest,
         attributes: vec![EdgeAttribute::Common(CommonAttr::FontSize(12.0))],
@@ -368,7 +367,6 @@ fn test_edge_display_and_parse() {
     let s = edge.to_string();
     let parsed = s.parse::<Edge>().unwrap();
     assert_eq!(parsed.id, edge.id);
-    assert_eq!(parsed.label, edge.label);
     assert_eq!(parsed.source, format!("\"{}\"", edge.source));
     assert_eq!(parsed.dest, format!("\"{}\"", edge.dest));
     assert_eq!(parsed.attributes, edge.attributes);
@@ -505,11 +503,11 @@ impl RustGraph {
 
 pub struct Cluster {}
 impl CompatCluster for Cluster {
-    fn new<S: AsRef<str>>(name: S) -> Self {
+    fn new<S: AsRef<str>>(_name: S) -> Self {
         unimplemented!();
     }
 
-    fn set_attr<A: Into<NodeAttribute>>(&mut self, attr: A) {
+    fn set_attr<A: Into<NodeAttribute>>(&mut self, _attr: A) {
         unimplemented!();
     }
 }
@@ -587,8 +585,7 @@ mod tests {
             attributes: vec![] 
         };
         let edge = Edge { 
-            id: "A_B".into(), 
-            label: "".into(),
+            id: "A_B".into(),
             source: "A".into(), 
             dest: "B".into(), 
             attributes: vec![]
@@ -621,15 +618,13 @@ mod tests {
         };
 
         let edge_ab = Edge { 
-            id: "A_B".into(), 
-            label: "".into(),
+            id: "A_B".into(),
             source: "A".into(), 
             dest: "B".into(), 
             attributes: vec![]
         };
         let edge_bc = Edge { 
-            id: "B_C".into(), 
-            label: "".into(),
+            id: "B_C".into(),
             source: "B".into(), 
             dest: "C".into(), 
             attributes: vec![]

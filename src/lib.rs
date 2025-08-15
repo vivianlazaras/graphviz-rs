@@ -392,12 +392,11 @@ pub trait CompatGraph {
     fn new_edge<I: AsRef<str> + Clone, L: AsRef<str>, S: AsRef<str>, D: AsRef<str>>(
         &mut self,
         id: I,
-        label: L,
         source: S,
         dest: D
     ) -> Result<I, GraphErr> {
         debug_assert_ne!(source.as_ref(), dest.as_ref());
-        let mut edge = Self::Edge::new(id.clone(), label.as_ref().to_string(), source.as_ref().to_string(), dest.as_ref().to_string());
+        let edge = Self::Edge::new(id.clone(), source.as_ref().to_string(), dest.as_ref().to_string());
         self.add_edge(edge);
         Ok(id)
     }
@@ -427,7 +426,7 @@ pub trait CompatNode {
 }
 
 pub trait CompatEdge {
-    fn new<S: AsRef<str>, I: AsRef<str>, U: AsRef<str>, D: AsRef<str>>(id: I, label: U, source: S, dest: D) -> Self;
+    fn new<S: AsRef<str>, I: AsRef<str>, D: AsRef<str>>(id: I, source: S, dest: D) -> Self;
     fn set_attr<A: Into<EdgeAttribute>>(&mut self, attr: A);
 }
 

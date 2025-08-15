@@ -1,6 +1,8 @@
 use wrappedviz::*;
 use wrappedviz::style::{NodeAttr, GraphAttr, CommonAttr};
 use wrappedviz::style::shape::NodeShape;
+use wrappedviz::cgraph::{Context, Graph};
+
 fn main() {
     let ctx = Context::new();
     // Start with an empty directed graph

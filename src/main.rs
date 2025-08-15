@@ -39,7 +39,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut graph = Graph::new(content, &context);
 
     // Set layout engine (dot)
-    graph.set_layout(Layout::Dot);
+    graph.set_layout(Layout::Dot).unwrap();
 
     // Render to SVG
     let svg_slice = context.render(&graph, OutputFormat::Svg)?;

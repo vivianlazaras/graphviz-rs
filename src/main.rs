@@ -8,7 +8,7 @@ use std::io::Write;
 use std::error::Error;
 
 // Adjust these use statements to your custom crate structure:
-use wrappedviz::{Context, Graph, Layout, OutputFormat};
+use wrappedviz::{cgraph::Context, cgraph::Graph, Layout, OutputFormat};
 
 #[derive(Debug, Clone, StructOpt)]
 pub struct Args {

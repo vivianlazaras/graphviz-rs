@@ -1,12 +1,3 @@
-#![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)]
-#![allow(non_snake_case)]
-#![allow(dead_code)]
-#![allow(unused_imports)]
-#![allow(improper_ctypes)]
-#![allow(unsafe_code)]
-#![allow(clippy::useless_transmute, clippy::transmute_ptr_to_ptr, clippy::transmute_ptr_to_ref)]
-
 //! # graphviz
 //!
 //! This crate provides an idiomatic Rust wrapper over the Graphviz C libraries (`libgvc` and `libcgraph`),
@@ -100,6 +91,19 @@
 //! ## License
 //! Licensed under MIT or Apache-2.0.
 
+#![allow(non_upper_case_globals)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(improper_ctypes)]
+#![allow(unsafe_code)]
+#![allow(clippy::useless_transmute, clippy::transmute_ptr_to_ptr, clippy::transmute_ptr_to_ref)]
+use crate::style::NodeAttribute;
+use crate::style::EdgeAttribute;
+use crate::style::GraphAttr;
+use crate::style::ClusterAttribute;
+use std::error::Error;
 use crate::style::Attribute;
 use crate::style::{EdgeAttr, NodeAttr};
 use std::collections::HashMap;
@@ -108,6 +112,7 @@ use std::fmt;
 use std::ptr;
 use std::str::FromStr;
 use std::ffi::CStr;
+pub use style::shape::NodeShape;
 /// provides style attributes that can be passed to graphviz
 pub mod style;
 /// provides serde compatible structures for easily defining graph themes.
@@ -122,8 +127,7 @@ pub mod rgraph;
 /// provides types that wrap graphviz
 #[cfg(all(feature = "bindings", not(target_arch = "wasm32")))]
 pub mod cgraph;
-#[cfg(all(feature = "bindings", not(target_arch = "wasm32")))]
-pub use cgraph::*;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
@@ -344,12 +348,90 @@ impl FromStr for OutputFormat {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum GraphErr {}
+
+impl fmt::Display for GraphErr {
+    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {} // exhaustive match — unreachable since no variants
+    }
+}
+
+impl Error for GraphErr {}
+
+impl From<GraphErr> for String {
+    fn from(_: GraphErr) -> String {
+        "GraphErr (unreachable, empty enum)".to_string()
+    }
+}
+
 pub trait CompatGraph {
-    type Err: std::error::Error;
-    fn new<S: AsRef<str>, A: Attribute>(name: S, attributes: Vec<A>) -> Self;
-    fn add_node<S: AsRef<str>, A: Attribute>(id: S, attributes: Vec<A>) -> Result<String, Self::Err>;
-    fn add_cluster<S: AsRef<str>, A: Attribute>(name: S, attributes: Vec<A>) -> Result<String, Self::Err>;
-    fn add_edge<S: AsRef<str>, A: Attribute>(label: S, source: S, dest: S, attributes: Vec<A>) -> Result<String, Self::Err>;
-    // This method is used to produce a graph representation compatible with graphviz, the cgraph type is used here to ensure implementational validity.
-    //fn into_cgraph(self, context: Context<'_>) -> CGraph;
+    type Cluster: CompatCluster;
+    type Edge: CompatEdge;
+    type Node: CompatNode;
+
+    fn new<S: AsRef<str>, A: Attribute + Into<GraphAttr>>(name: S, attributes: Vec<A>) -> Self;
+
+    /// Default node constructor using `CompatNode`
+    fn new_node<L: AsRef<str>, S: AsRef<str>, A: Into<NodeAttribute>>(
+        &mut self,
+        label: L,
+        id: S,
+        attributes: Vec<A>,
+    ) -> Result<String, GraphErr> {
+        let id_ref = id.as_ref().to_string();
+        let mut node = Self::Node::new(id_ref.clone(), label.as_ref().to_string());
+        for attr in attributes {
+            node.set_attr(attr);
+        }
+        self.add_node(node);
+        Ok(id_ref)
+    }
+
+    /// Default edge constructor using `CompatEdge`
+    fn new_edge<I: AsRef<str> + Clone, L: AsRef<str>, S: AsRef<str>, D: AsRef<str>>(
+        &mut self,
+        id: I,
+        label: L,
+        source: S,
+        dest: D
+    ) -> Result<I, GraphErr> {
+        debug_assert_ne!(source.as_ref(), dest.as_ref());
+        let mut edge = Self::Edge::new(id.clone(), label.as_ref().to_string(), source.as_ref().to_string(), dest.as_ref().to_string());
+        self.add_edge(edge);
+        Ok(id)
+    }
+
+    /*fn new_cluster<S: AsRef<str>, A: Into<NodeAttribute>>(
+        &mut self,
+        name: S,
+        attributes: Vec<A>,
+    ) -> Result<String, GraphErr> {
+        let name_str = name.as_ref().to_string();
+        let mut cluster = Self::Cluster::new(&name_str);
+        for attr in attributes {
+            cluster.set_attr(attr);
+        }
+        self.add_cluster(cluster);
+        Ok(name_str)
+    }*/
+
+    fn set_attr<A: Into<GraphAttr> + Attribute>(&mut self, attr: A);
+    fn add_edge<E: Into<Self::Edge>>(&mut self, edge: E);
+    fn add_node<N: Into<Self::Node>>(&mut self, node: N);
+}
+
+pub trait CompatNode {
+    fn new<S: AsRef<str>>(id: S, label: S) -> Self;
+    fn set_attr<A: Into<NodeAttribute>>(&mut self, attr: A);
+}
+
+pub trait CompatEdge {
+    fn new<S: AsRef<str>, I: AsRef<str>, U: AsRef<str>, D: AsRef<str>>(id: I, label: U, source: S, dest: D) -> Self;
+    fn set_attr<A: Into<EdgeAttribute>>(&mut self, attr: A);
+}
+
+pub trait CompatCluster {
+    fn new<S: AsRef<str>>(name: S) -> Self;
+    fn set_attr<A: Into<NodeAttribute>>(&mut self, attr: A);
 }

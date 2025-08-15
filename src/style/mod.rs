@@ -2,6 +2,7 @@
 pub mod color;
 /// Defines supported shapes for graphviz.
 pub mod shape;
+pub use shape::*;
 #[cfg(feature = "serde")]
 pub mod serialize;
 use crate::style::shape::{ArrowType, NodeShape};
@@ -629,6 +630,8 @@ pub enum GraphAttr {
     Margin(f32),
     NodeSep(f32),
     RankSep(f32),
+    Splines(bool),
+    Root(String),
     Size((f32, f32)), // width, height
 }
 
@@ -645,6 +648,10 @@ impl GraphAttr {
             Layout(v) => (
                 CString::new("layout").unwrap(),
                 CString::new(v.to_string()).unwrap(),
+            ),
+            Root(id) => (
+                CString::new("root").unwrap(),
+                CString::new(id.to_string()).unwrap()
             ),
             Center(v) => (
                 CString::new("center").unwrap(),
@@ -677,6 +684,10 @@ impl GraphAttr {
             RankSep(r) => (
                 CString::new("ranksep").unwrap(),
                 CString::new(r.to_string()).unwrap(),
+            ),
+            Splines(s) => (
+                CString::new("splines").unwrap(),
+                CString::new(s.to_string()).unwrap()
             ),
         }
     }
@@ -737,11 +748,13 @@ impl fmt::Display for GraphAttr {
             RankDir(v) => write!(f, "rankdir=\"{}\"", v),
             BgColor(v) => write!(f, "bgcolor=\"{}\"", v),
             Center(v) => write!(f, "center=\"{}\"", v),
-            DPI(v) => write!(f, "dpi=\"{}\"", v),
-            Margin(v) => write!(f, "margin=\"{}\"", v),
-            NodeSep(v) => write!(f, "nodesep=\"{}\"", v),
-            RankSep(v) => write!(f, "ranksep=\"{}\"", v),
+            DPI(v) => write!(f, "dpi={}", v),
+            Margin(v) => write!(f, "margin={}", v),
+            NodeSep(v) => write!(f, "nodesep={}", v),
+            RankSep(v) => write!(f, "ranksep={}", v),
             Size((w, h)) => write!(f, "size=\"{},{}\"", w, h),
+            Root(id) => write!(f, "root=\"{}\"", id),
+            Splines(splines) => write!(f, "splines={}", splines)
         }
     }
 }
@@ -1207,5 +1220,29 @@ impl<'de> serde::Deserialize<'de> for ClusterAttribute {
     where D: serde::Deserializer<'de> {
         let s = String::deserialize(deserializer)?;
         ClusterAttribute::from_str(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+impl From<CommonAttr> for NodeAttribute {
+    fn from(attr: CommonAttr) -> NodeAttribute {
+        NodeAttribute::Common(attr)
+    }
+}
+
+impl From<NodeAttr> for NodeAttribute {
+    fn from(attr: NodeAttr) -> NodeAttribute {
+        NodeAttribute::NodeAttr(attr)
+    }
+}
+
+impl From<CommonAttr> for EdgeAttribute {
+    fn from(attr: CommonAttr) -> EdgeAttribute {
+        EdgeAttribute::Common(attr)
+    }
+}
+
+impl From<EdgeAttr> for EdgeAttribute {
+    fn from(attr: EdgeAttr) -> EdgeAttribute {
+        EdgeAttribute::EdgeAttr(attr)
     }
 }

@@ -8360,6 +8360,9 @@ unsafe extern "C" {
     pub fn gvToolTred(g: *mut graph_t) -> ::std::os::raw::c_int;
 }
 unsafe extern "C" {
+    pub static mut gvplugin_dot_layout_LTX_library: gvplugin_library_t;
+}
+unsafe extern "C" {
     pub fn rust_aghead(ptr: *mut Agedge_t) -> *mut Agnode_t;
 }
 unsafe extern "C" {

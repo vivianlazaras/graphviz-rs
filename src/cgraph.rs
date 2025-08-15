@@ -264,7 +264,7 @@ impl<'c> Graph<'c> {
         let def = CString::new("").unwrap();
         println!("ptr values: {:?}, {:?}, {:?}", self.graph, name_cstr.as_ptr(), value_cstr.as_ptr());
         let ret = unsafe {
-            agsafeset_text(
+            agsafeset(
                 self.graph as *mut libc::c_void,
                 name_cstr.as_ptr() as *mut libc::c_char,
                 value_cstr.as_ptr(),
@@ -286,7 +286,7 @@ impl<'c> Graph<'c> {
     fn set_attribute_cstrings(&mut self, name: &CString, value: &CString) -> Result<(), String> {
         let def = std::ptr::null();
         let ret = unsafe {
-            agsafeset_text(
+            agsafeset(
                 self.graph as *mut libc::c_void,
                 name.as_ptr() as *mut i8,
                 value.as_ptr() as *mut i8,

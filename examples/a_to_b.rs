@@ -1,6 +1,6 @@
-use graphviz::*;
-use graphviz::style::{NodeAttr, GraphAttr, CommonAttr};
-use graphviz::style::shape::NodeShape;
+use wrappedviz::*;
+use wrappedviz::style::{NodeAttr, GraphAttr, CommonAttr};
+use wrappedviz::style::shape::NodeShape;
 fn main() {
     let ctx = Context::new();
     // Start with an empty directed graph

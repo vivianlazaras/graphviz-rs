@@ -7,6 +7,7 @@ pub mod wasm;
 #[cfg(dest_arch = "wasm32")]
 pub use wasm::*;
 use std::collections::HashMap;
+use crate::{CompatNode, CompatEdge, CompatCluster, CompatGraph};
 use uuid::Uuid;
 use std::fmt::Write;
 use crate::style::{EdgeAttribute, Attribute, GraphAttr, NodeAttribute, CommonAttr};
@@ -15,17 +16,28 @@ use crate::style::{EdgeAttribute, Attribute, GraphAttr, NodeAttribute, CommonAtt
 #[derive(Debug, Clone, PartialEq)]
 pub struct Node {
     id: String,
-    label: String, 
+    label: String,
     attributes: Vec<NodeAttribute>,
 }
 
-impl Node {
-    pub fn new<S: AsRef<str>>(id: String, label: S) -> Self {
+impl CompatNode for Node {
+    
+    fn new<S: AsRef<str>>(id: S, label: S) -> Self {
         Self {
-            id,
+            id: id.as_ref().to_string(),
             label: label.as_ref().to_string(),
             attributes: Vec::new(),
         }
+    }
+    
+    fn set_attr<A: Into<NodeAttribute>>(&mut self, attr: A) {
+        self.attributes.push(attr.into());
+    }
+}
+
+impl Node {
+    pub fn id(&self) -> &str {
+        &self.id
     }
 }
 
@@ -158,30 +170,48 @@ impl<'de> serde::Deserialize<'de> for Node {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Edge {
     id: String,
-    label: String,
     source: String,
     dest: String,
     attributes: Vec<EdgeAttribute>,
 }
 
 impl Edge {
-    pub fn new(id: String, label: &str, source: String, dest: String) -> Self {
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn create(source: String, dest: String) -> Self {
         Self {
-            id,
+            id: format!("{}_{}", source, dest),
             source,
             dest,
-            label: label.to_string(),
             attributes: Vec::new(),
         }
     }
 }
 
+impl CompatEdge for Edge {
+    fn new<S: AsRef<str>, I: AsRef<str>, U: AsRef<str>, D: AsRef<str>>(id: I, label: U, source: S, dest: D) -> Self {
+        Self {
+            id: id.as_ref().to_string(),
+            source: source.as_ref().to_string(),
+            dest: source.as_ref().to_string(),
+            attributes: Vec::new(),
+        }
+    }
+
+    fn set_attr<A: Into<EdgeAttribute>>(&mut self, attr: A) {
+        self.attributes.push(attr.into());
+    }
+}
+
 impl std::fmt::Display for Edge {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        debug_assert_ne!(self.source, self.dest);
         write!(
             f,
-            "\"{}\" -> \"{}\" [id=\"{}\", label=\"{}\"",
-            self.source, self.dest, self.id, self.label
+            "\"{}\" -> \"{}\" [id=\"{}\"",
+            self.source, self.dest, self.id
         )?;
         for attr in &self.attributes {
             if let EdgeAttribute::Common(CommonAttr::Id(_))
@@ -300,7 +330,7 @@ impl FromStr for Edge {
             }
         }
 
-        Ok(Edge { source, dest, id, label, attributes })
+        Ok(Edge { source, dest, id, attributes })
     }
 }
 
@@ -394,17 +424,17 @@ impl RustGraph {
         newgraph
     }
 
-    /// Add a new edge to the graph with the given id, label, source, and destination node IDs
+    /*/// Add a new edge to the graph with the given id, label, source, and destination node IDs
     pub fn add_edge(&mut self, id: String, label: &str, source: String, dest: String) {
         let edge = Edge::new(id.clone(), label, source, dest);
         self.edges.insert(id, edge);
     }
 
     /// Add a new node to the graph with the given id and label
-    pub fn add_node(&mut self, id: String, label: &str) {
-        let node = Node::new(id.clone(), label);
+    pub fn add_node<S: AsRef<str>>(&mut self, id: S, label: S) {
+        let node = Node::new(id, label);
         self.nodes.insert(id, node);
-    }
+    }*/
 
     /// Add an attribute to an existing node
     pub fn add_node_attr<A: Attribute + Into<NodeAttribute>>(&mut self, node_id: String, attr: A) {
@@ -453,16 +483,65 @@ impl RustGraph {
         let mut dot = String::new();
         dot.push_str("digraph G {\n");
 
+        for attr in self.attributes.iter() {
+            writeln!(&mut dot, "    {}", attr).unwrap();
+        }
+
+        writeln!(&mut dot, "    overlap=false").unwrap();
+
         for (_id, node) in &self.nodes {
             writeln!(&mut dot, "    {}", node).unwrap();
         }
 
         for (_id, edge) in &self.edges {
+            debug_assert_ne!(edge.source, edge.dest);
             writeln!(&mut dot, "    {}", edge).unwrap();
         }
 
         dot.push_str("}\n");
         dot
+    }
+}
+
+pub struct Cluster {}
+impl CompatCluster for Cluster {
+    fn new<S: AsRef<str>>(name: S) -> Self {
+        unimplemented!();
+    }
+
+    fn set_attr<A: Into<NodeAttribute>>(&mut self, attr: A) {
+        unimplemented!();
+    }
+}
+
+impl CompatGraph for RustGraph {
+    type Cluster = Cluster;
+    type Edge = Edge;
+    type Node = Node;
+
+    fn new<S: AsRef<str>, A: Attribute + Into<GraphAttr>>(name: S, attributes: Vec<A>) -> Self {
+        RustGraph {
+            name: name.as_ref().to_string(),
+            nodes: HashMap::new(),
+            edges: HashMap::new(),
+            clusters: HashMap::new(),
+            attributes: attributes.into_iter().map(|a| a.into()).collect(),
+        }
+    }
+
+    fn set_attr<A: Into<GraphAttr> + Attribute>(&mut self, attr: A) {
+        self.add_graph_attr(attr);
+    }
+
+    fn add_edge<E: Into<Self::Edge>>(&mut self, edge: E) {
+        let edge = edge.into();
+        debug_assert_ne!(edge.source, edge.dest);
+        self.edges.insert(edge.id().to_string(), edge);
+    }
+
+    fn add_node<N: Into<Self::Node>>(&mut self, node: N) {
+        let node = node.into();
+        self.nodes.insert(node.id().to_string(), node);
     }
 }
 
@@ -571,3 +650,4 @@ mod tests {
         assert!(dot.contains("\"B\" -> \"C\""));
     }
 }
+

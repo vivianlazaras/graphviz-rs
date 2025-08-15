@@ -1,6 +1,6 @@
 [package]
 name = "wrappedviz"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "MIT"
 description = "A set of bindings to graphviz C API for rendering graphs"

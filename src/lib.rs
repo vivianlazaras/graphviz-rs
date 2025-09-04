@@ -15,9 +15,10 @@
 //! ## Example
 //! This example will only work if bindgen is enabled (which is default)
 //! ```rust
-//! use graphviz::*;
-//! use graphviz::style::{NodeAttr, GraphAttr, CommonAttr};
-//! use graphviz::style::shape::NodeShape;
+//! use wrappedviz::*;
+//! use wrappedviz::cgraph::{Context, Graph};
+//! use wrappedviz::style::{NodeAttr, GraphAttr, CommonAttr};
+//! use wrappedviz::style::shape::NodeShape;
 //!
 //! fn main() {
 //!     let ctx = Context::new();

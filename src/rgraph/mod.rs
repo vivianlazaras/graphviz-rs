@@ -148,9 +148,9 @@ impl FromStr for Node {
         // check duplicate label in attributes
         for attr in &attributes {
             if let NodeAttribute::Common(CommonAttr::Label(dup_label)) = attr {
-                if dup_label != &label {
+                /*Fif dup_label != &label {
                     return Err(ParseNodeError::LabelMismatch { expected: label.clone(), found: dup_label.clone() });
-                }
+                }*/
             }
         }
 
@@ -321,7 +321,7 @@ impl FromStr for Edge {
         }
 
         let id = id.ok_or(ParseEdgeError::MissingId)?;
-        let label = label.ok_or(ParseEdgeError::MissingLabel)?;
+        //let label = label.ok_or(ParseEdgeError::MissingLabel)?;
 
         // check for duplicate id or label in attributes
         for attr in &attributes {
@@ -332,9 +332,9 @@ impl FromStr for Edge {
                 }
             }
             if let EdgeAttribute::Common(CommonAttr::Label(dup_label)) = attr {
-                if dup_label != &label {
+                /*if dup_label != &label {
                     return Err(ParseEdgeError::LabelMismatch { expected: label.clone(), found: dup_label.clone() });
-                }
+                }*/
             }
         }
 

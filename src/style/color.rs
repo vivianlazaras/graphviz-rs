@@ -13,7 +13,7 @@ use std::str::FromStr;
 /// Basic usage:
 ///
 /// ```rust
-/// use graphviz::style::color::Color;
+/// use wrappedviz::style::color::Color;
 /// use std::str::FromStr;
 ///
 /// let red = Color::from_str("#ff0000").unwrap();
@@ -100,7 +100,7 @@ impl Color {
     /// # Example
     ///
     /// ```
-    /// use graphviz::style::color::Color;
+    /// use wrappedviz::style::color::Color;
     ///
     /// let color = Color::from_ycbcr(100.0, 100.0, 100.0);
     /// assert_eq!(color, Color::RGB(60, 129, 50));
@@ -120,7 +120,7 @@ impl Color {
     /// # Example
     ///
     /// ```
-    /// use graphviz::style::color::Color;
+    /// use wrappedviz::style::color::Color;
     /// let color = Color::RGB(128, 64, 32);
     /// let (r, g, b) = color.as_rgb_normalized();
     /// assert!((r - 0.501).abs() < 0.01);
@@ -140,7 +140,7 @@ impl Color {
     /// # Example
     ///
     /// ```
-    /// use graphviz::style::color::Color;
+    /// use wrappedviz::style::color::Color;
     /// let color = Color::RGB(255, 255, 0);
     /// assert_eq!(color.to_hex_string(), "#ffff00");
     /// ```
@@ -156,7 +156,7 @@ impl Color {
     /// # Example
     ///
     /// ```
-    /// use graphviz::style::color::Color;
+    /// use wrappedviz::style::color::Color;
     /// let color = Color::RGB(12, 34, 56);
     /// assert_eq!(color.to_graphviz(), "\"#0c2238\"");
     /// ```
@@ -184,7 +184,7 @@ impl FromStr for Color {
     /// # Examples
     ///
     /// ```
-    /// use graphviz::style::color::Color;
+    /// use wrappedviz::style::color::Color;
     /// use std::str::FromStr;
     ///
     /// let red = Color::from_str("#f00").unwrap();

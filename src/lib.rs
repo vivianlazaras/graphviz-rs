@@ -128,6 +128,8 @@ pub mod rgraph;
 #[cfg(all(feature = "bindings", not(target_arch = "wasm32")))]
 pub mod cgraph;
 
+use crate::style::{CommonAttr};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
@@ -401,28 +403,49 @@ pub trait CompatGraph {
         Ok(id)
     }
 
-    /*fn new_cluster<S: AsRef<str>, A: Into<NodeAttribute>>(
-        &mut self,
-        name: S,
-        attributes: Vec<A>,
-    ) -> Result<String, GraphErr> {
-        let name_str = name.as_ref().to_string();
-        let mut cluster = Self::Cluster::new(&name_str);
-        for attr in attributes {
-            cluster.set_attr(attr);
-        }
-        self.add_cluster(cluster);
-        Ok(name_str)
-    }*/
-
     fn set_attr<A: Into<GraphAttr> + Attribute>(&mut self, attr: A);
     fn add_edge<E: Into<Self::Edge>>(&mut self, edge: E);
     fn add_node<N: Into<Self::Node>>(&mut self, node: N);
 }
 
+pub trait GraphExt: CompatGraph {
+    type NodeIter<'a>: Iterator<Item = &'a Self::Node>
+    where
+        Self: 'a;
+
+    type NodeIterMut<'a>: Iterator<Item = &'a mut Self::Node>
+    where
+        Self: 'a;
+
+    fn node_iter(&self) -> Self::NodeIter<'_>;
+    fn node_iter_mut(&mut self) -> Self::NodeIterMut<'_>;
+    /// Default: apply closure to all nodes of a given class
+    fn apply_to_class<F>(&mut self, classname: &str, mut f: F)
+    where
+        F: FnMut(&mut Self::Node),
+    {
+        for node in self.node_iter_mut() {
+            if node.has_attr(CommonAttr::Class(classname.to_string())) {
+                f(node);
+            }
+        }
+    }
+
+    /// Default: collect all nodes of a given class into a Vec
+    fn nodes_by_class<'a>(
+        &'a mut self,
+        classname: &str,
+    ) -> Vec<&'a mut Self::Node> {
+        self.node_iter_mut()
+            .filter(|n| n.has_attr(CommonAttr::Class(classname.to_string())))
+            .collect()
+    }
+}
+
 pub trait CompatNode {
     fn new<S: AsRef<str>>(id: S, label: S) -> Self;
     fn set_attr<A: Into<NodeAttribute>>(&mut self, attr: A);
+    fn has_attr<A: Into<NodeAttribute>>(&self, attr: A) -> bool;
 }
 
 pub trait CompatEdge {

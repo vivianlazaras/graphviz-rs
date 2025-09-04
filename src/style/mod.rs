@@ -773,6 +773,8 @@ pub enum CommonAttr {
     Class(String),
     Tooltip(String),
     URL(String),
+    /// this is ignored by graphviz, but used to store custom data.
+    MetaData(String),
 }
 
 impl Attribute for CommonAttr {
@@ -813,6 +815,10 @@ impl CommonAttr {
                 CString::new("fontname").unwrap(),
                 CString::new(f.to_string()).unwrap(),
             ),
+            MetaData(f) => (
+                CString::new("metadata").unwrap(),
+                CString::new(f.to_string()).unwrap()
+            )
         }
     }
 }
@@ -834,6 +840,7 @@ impl fmt::Display for CommonAttr {
             Class(v) => write!(f, "class=\"{}\"", v),
             Tooltip(v) => write!(f, "tooltip=\"{}\"", v),
             URL(v) => write!(f, "URL=\"{}\"", v),
+            MetaData(v) => write!(f, "metadata=\"{}\"", v),
         }
     }
 }

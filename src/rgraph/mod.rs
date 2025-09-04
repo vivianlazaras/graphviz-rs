@@ -7,7 +7,7 @@ pub mod wasm;
 #[cfg(target_arch = "wasm32")]
 pub use wasm::*;
 use std::collections::HashMap;
-use crate::{CompatNode, CompatEdge, CompatCluster, CompatGraph};
+use crate::{CompatNode, GraphExt, CompatEdge, CompatCluster, CompatGraph};
 use uuid::Uuid;
 use std::fmt::Write;
 use crate::style::{EdgeAttribute, Attribute, GraphAttr, NodeAttribute, CommonAttr};
@@ -33,11 +33,19 @@ impl CompatNode for Node {
     fn set_attr<A: Into<NodeAttribute>>(&mut self, attr: A) {
         self.attributes.push(attr.into());
     }
+
+    fn has_attr<A: Into<NodeAttribute>>(&self, attr: A) -> bool {
+        self.attributes.contains(&attr.into())
+    }
 }
 
 impl Node {
     pub fn id(&self) -> &str {
         &self.id
+    }
+
+    pub fn has_class(&self, classname: &str) -> bool {
+        self.has_attr(CommonAttr::Class(classname.to_string()))
     }
 }
 
@@ -499,6 +507,15 @@ impl RustGraph {
         dot.push_str("}\n");
         dot
     }
+
+    pub fn nodes_by_class<'a>(
+        &'a mut self,
+        classname: &str,
+    ) -> impl Iterator<Item = &'a mut Node> {
+        self.nodes
+            .values_mut()
+            .filter(move |node| node.has_class(classname))
+    }
 }
 
 pub struct Cluster {}
@@ -540,6 +557,19 @@ impl CompatGraph for RustGraph {
     fn add_node<N: Into<Self::Node>>(&mut self, node: N) {
         let node = node.into();
         self.nodes.insert(node.id().to_string(), node);
+    }
+}
+
+impl GraphExt for RustGraph {
+    type NodeIter<'a> = std::collections::hash_map::Values<'a, String, Node>;
+    type NodeIterMut<'a> = std::collections::hash_map::ValuesMut<'a, String, Node>;
+
+    fn node_iter(&self) -> Self::NodeIter<'_> {
+        self.nodes.values()
+    }
+
+    fn node_iter_mut(&mut self) -> Self::NodeIterMut<'_> {
+        self.nodes.values_mut()
     }
 }
 

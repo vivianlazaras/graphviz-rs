@@ -37,6 +37,12 @@ impl CompatNode for Node {
     fn has_attr<A: Into<NodeAttribute>>(&self, attr: A) -> bool {
         self.attributes.contains(&attr.into())
     }
+
+    fn get_attr(&self, attr: &str) -> Option<&NodeAttribute> {
+        self.attributes
+            .iter()
+            .find(|a| a.attr_name() == attr)
+    }
 }
 
 impl Node {
@@ -210,6 +216,12 @@ impl CompatEdge for Edge {
 
     fn set_attr<A: Into<EdgeAttribute>>(&mut self, attr: A) {
         self.attributes.push(attr.into());
+    }
+
+    fn get_attr(&self, attr: &str) -> Option<&EdgeAttribute> {
+        self.attributes
+            .iter()
+            .find(|a| a.attr_name() == attr) 
     }
 }
 

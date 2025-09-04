@@ -446,12 +446,37 @@ pub trait GraphExt: CompatGraph {
 pub trait CompatNode {
     fn new<S: AsRef<str>>(id: S, label: S) -> Self;
     fn set_attr<A: Into<NodeAttribute>>(&mut self, attr: A);
-    fn has_attr<A: Into<NodeAttribute>>(&self, attr: A) -> bool;
+    fn has_attr<A: Into<NodeAttribute>>(&self, attr: A) -> bool {
+        let attr = attr.into();
+        if let Some(val) = self.get_attr(attr.attr_name()) {
+            if *val == attr {
+                true
+            }else{
+                false
+            }
+        }else{
+            false
+        }
+    }
+    fn get_attr(&self, attr: &str) -> Option<&NodeAttribute>;
 }
 
 pub trait CompatEdge {
     fn new<S: AsRef<str>, I: AsRef<str>, D: AsRef<str>>(id: I, source: S, dest: D) -> Self;
     fn set_attr<A: Into<EdgeAttribute>>(&mut self, attr: A);
+    fn has_attr<A: Into<EdgeAttribute>>(&self, attr: A) -> bool {
+        let attr = attr.into();
+        if let Some(val) = self.get_attr(attr.attr_name()) {
+            if *val == attr {
+                true
+            }else{
+                false
+            }
+        }else{
+            false
+        }
+    }
+    fn get_attr(&self, attr: &str) -> Option<&EdgeAttribute>;
 }
 
 pub trait CompatCluster {

@@ -117,6 +117,13 @@ impl Attribute for NodeAttribute {
             NodeAttribute::NodeAttr(e) => e.to_cstrings(),
         }
     }
+
+    fn attr_name(&self) -> &str {
+        match self {
+            NodeAttribute::Common(c) => c.attr_name(),
+            NodeAttribute::NodeAttr(a) => a.attr_name(),
+        }
+    }
 }
 
 impl TryFrom<(&str, &str)> for NodeAttribute {
@@ -155,6 +162,13 @@ impl Attribute for EdgeAttribute {
         match self {
             EdgeAttribute::Common(c) => c.to_cstrings(),
             EdgeAttribute::EdgeAttr(e) => e.to_cstrings(),
+        }
+    }
+
+    fn attr_name(&self) -> &str {
+        match self {
+            EdgeAttribute::Common(c) => c.attr_name(),
+            EdgeAttribute::EdgeAttr(a) => a.attr_name(),
         }
     }
 }
@@ -219,6 +233,8 @@ pub trait Attribute {
     fn default(&self) -> &'static str {
         ""
     }
+    /// returns a string representation of the attributes variant, such as is used to convert to string types.
+    fn attr_name(&self) -> &str;
 }
 
 /// Direction of rank layout in Graphviz (`rankdir` attribute).
@@ -380,53 +396,51 @@ impl Attribute for NodeAttr {
     fn to_cstrings(&self) -> (CString, CString) {
         self.to_cstrings()
     }
+
+    fn attr_name(&self) -> &str {
+        match self {
+            NodeAttr::Shape(_)       => "shape",
+            NodeAttr::Style(_)       => "style",
+            NodeAttr::Color(_)       => "color",
+            NodeAttr::FillColor(_)   => "fillcolor",
+            NodeAttr::LabelLoc(_)    => "labelloc",
+            NodeAttr::Width(_)       => "width",
+            NodeAttr::Height(_)      => "height",
+            NodeAttr::FixedSize(_)   => "fixedsize",
+            NodeAttr::Image(_)       => "image",
+            NodeAttr::Peripheries(_) => "peripheries",
+        }
+    }
 }
 
 impl NodeAttr {
-    pub fn to_cstrings(&self) -> (CString, CString) {
-        use NodeAttr::*;
+
+    /// Get the value as a string (for Display and CString conversion)
+    fn value_as_str(&self) -> String {
         match self {
-            Shape(v) => (
-                CString::new("shape").unwrap(),
-                CString::new(v.to_string()).unwrap(),
-            ),
-            Height(v) => (
-                CString::new("height").unwrap(),
-                CString::new(format!("{:.3}", v)).unwrap(),
-            ),
-            Width(v) => (
-                CString::new("width").unwrap(),
-                CString::new(format!("{:.3}", v)).unwrap(),
-            ),
-            FixedSize(v) => (
-                CString::new("fixedsize").unwrap(),
-                CString::new(if *v { "true" } else { "false" }).unwrap(),
-            ),
-            FillColor(c) => (
-                CString::new("fillcolor").unwrap(),
-                CString::new(c.to_string()).unwrap(),
-            ),
-            Color(c) => (
-                CString::new("color").unwrap(),
-                CString::new(c.to_string()).unwrap(),
-            ),
-            Image(i) => (
-                CString::new("image").unwrap(),
-                CString::new(i.to_string()).unwrap(),
-            ),
-            Peripheries(v) => (
-                CString::new("peripheries").unwrap(),
-                CString::new(format!("{:.3}", v)).unwrap(),
-            ),
-            Style(s) => (
-                CString::new("style").unwrap(),
-                CString::new(s.to_string()).unwrap(),
-            ),
-            LabelLoc(l) => (
-                CString::new("labelloc").unwrap(),
-                CString::new(l.to_string()).unwrap(),
-            ),
+            NodeAttr::Shape(v) => v.to_string(),
+            NodeAttr::Style(v) => v.to_string(),
+            NodeAttr::Color(v) => v.to_string(),
+            NodeAttr::FillColor(v) => v.to_string(),
+            NodeAttr::LabelLoc(v) => v.to_string(),
+            NodeAttr::Image(v) => v.to_string(),
+
+            NodeAttr::Width(v)
+            | NodeAttr::Height(v) => format!("{:.3}", v),
+
+            NodeAttr::FixedSize(v) => {
+                if *v { "true".to_string() } else { "false".to_string() }
+            }
+
+            NodeAttr::Peripheries(v) => format!("{:.3}", v),
         }
+    }
+
+    /// Convert into CString tuple, reusing attr_name + value_string
+    pub fn to_cstrings(&self) -> (CString, CString) {
+        let key = CString::new(self.attr_name()).unwrap();
+        let val = CString::new(self.value_as_str()).unwrap();
+        (key, val)
     }
 }
 
@@ -474,19 +488,7 @@ impl fmt::Debug for NodeAttr {
 
 impl fmt::Display for NodeAttr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use NodeAttr::*;
-        match self {
-            Shape(v) => write!(f, "shape=\"{}\"", v),
-            Style(v) => write!(f, "style=\"{}\"", v),
-            Color(v) => write!(f, "color=\"{}\"", v),
-            FillColor(v) => write!(f, "fillcolor=\"{}\"", v),
-            LabelLoc(v) => write!(f, "labelloc=\"{}\"", v),
-            Width(v) => write!(f, "width=\"{}\"", v),
-            Height(v) => write!(f, "height=\"{}\"", v),
-            FixedSize(v) => write!(f, "fixedsize=\"{}\"", v),
-            Image(v) => write!(f, "image=\"{}\"", v),
-            Peripheries(v) => write!(f, "peripheries=\"{}\"", v),
-        }
+        write!(f, "{}=\"{}\"", self.attr_name(), self.value_as_str())
     }
 }
 
@@ -508,6 +510,22 @@ pub enum EdgeAttr {
 impl Attribute for EdgeAttr {
     fn to_cstrings(&self) -> (CString, CString) {
         self.to_cstrings()
+    }
+
+    fn attr_name(&self) -> &str {
+        use EdgeAttr::*;
+        match self {
+            ArrowHead(_) => "arrowhead",
+            ArrowTail(_) => "arrowtail",
+            Dir(_) => "dir",
+            Weight(_) => "weight",
+            MinLen(_) => "minlen",
+            LabelDistance(_) => "labeldistance",
+            LabelAngle(_) => "labelangle",
+            Constraint(_) => "constraint",
+            Style(_) => "style",
+            Color(_) => "color",
+        }
     }
 }
 
@@ -638,6 +656,23 @@ pub enum GraphAttr {
 impl Attribute for GraphAttr {
     fn to_cstrings(&self) -> (CString, CString) {
         self.to_cstrings()
+    }
+
+    fn attr_name(&self) -> &str {
+        use GraphAttr::*;
+        match self {
+            Layout(_)   => "layout",
+            Root(_)     => "root",
+            Center(_)   => "center",
+            DPI(_)      => "dpi",
+            Size(_)     => "size",
+            RankDir(_)  => "rankdir",
+            BgColor(_)  => "bgcolor",
+            Margin(_)   => "margin",
+            NodeSep(_)  => "nodesep",
+            RankSep(_)  => "ranksep",
+            Splines(_)  => "splines",
+        }
     }
 }
 
@@ -780,6 +815,20 @@ pub enum CommonAttr {
 impl Attribute for CommonAttr {
     fn to_cstrings(&self) -> (CString, CString) {
         self.to_cstrings()
+    }
+
+    fn attr_name(&self) -> &str {
+        use CommonAttr::*;
+        match self {
+            Label(_)     => "label",
+            FontSize(_)  => "fontsize",
+            URL(_)       => "URL",
+            Class(_)     => "class",
+            Id(_)        => "id",
+            Tooltip(_)   => "tooltip",
+            FontName(_)  => "fontname",
+            MetaData(_)  => "metadata",
+        }
     }
 }
 
@@ -1105,6 +1154,16 @@ impl Attribute for ClusterAttr {
             Peripheries(v) => (CString::new("peripheries").unwrap(), CString::new(v.to_string()).unwrap()),
         }
     }
+
+    fn attr_name(&self) -> &str {
+        use ClusterAttr::*;
+        match self {
+            Style(_)       => "style",
+            Color(_)       => "color",
+            LabelLoc(_)    => "labelloc",
+            Peripheries(_) => "peripheries",
+        }
+    }
 }
 
 impl fmt::Display for ClusterAttr {
@@ -1187,6 +1246,10 @@ impl Attribute for ClusterAttribute {
             ClusterAttribute::Common(attr) => attr.to_cstrings(),
             ClusterAttribute::ClusterAttr(attr) => attr.to_cstrings(),
         }
+    }
+
+    fn attr_name(&self) -> &str {
+        unimplemented!();
     }
 }
 

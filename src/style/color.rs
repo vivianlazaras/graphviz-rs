@@ -34,6 +34,7 @@ pub enum Color {
     /// Raw RGB triplet.
     RGB(u8, u8, u8),
     /// Hex string (e.g., "#ff0000")
+    /// I may want to convert to  [u8; 6] to support bitwise `Copy`
     Hex(String),
 }
 
@@ -82,6 +83,7 @@ impl Color {
     pub const DARKVIOLET: Color = Color::RGB(148, 0, 211);
     pub const DEEPPINK: Color = Color::RGB(255, 20, 147);
     pub const DEEPSKYBLUE: Color = Color::RGB(0, 191, 255);
+    pub const LIGHTGREEN: Color = Color::RGB(144, 238, 144);
 }
 
 impl Color {
